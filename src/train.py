@@ -36,7 +36,6 @@ def train(cfg: DictConfig):
                          MetricLogger(day=cfg.day, name=cfg.model.name, path_dir=csv_log_path),
                          ImagePlotCallback(plot_interval=cfg.plot_interval),
                          EvaluationMetricLogger(day=cfg.day, name=cfg.model.name, path=csv_log_path),
-                         SaveImage(save_images=cfg.save_image),
                          RichModelSummary(max_depth=3),
                          instantiate(cfg.checkpoint),
                          ]

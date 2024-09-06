@@ -3,30 +3,33 @@ ms_channels: 8
 train:
   _target_: torch.utils.data.DataLoader
   dataset:
-    _target_: dataloader.${dataset.name}.${dataset.name}
-    dataset_path: ${oc.env:DATASET_PATH}/${dataset.name}
-    subset: train
-    sampling: ${sampling}
+    _target_: dataset.${dataset.name}.${dataset.name}
+    root: ${oc.env:DATASET_PATH}/${dataset.name}
+    fold: train
+    seed: 42
+    output_size: 32
   batch_size: ${model.train.batch_size}
   num_workers: ${model.train.num_workers}
   shuffle: True
 validation:
   _target_: torch.utils.data.DataLoader
   dataset:
-    _target_: dataloader.${dataset.name}.${dataset.name}
-    dataset_path: ${oc.env:DATASET_PATH}/${dataset.name}
-    subset: validation
-    sampling: ${sampling}
+    _target_: dataset.${dataset.name}.${dataset.name}
+    root: ${oc.env:DATASET_PATH}/${dataset.name}
+    fold: validation
+    seed: 42
+    output_size: 32
   batch_size: ${model.train.batch_size}
   num_workers: ${model.train.num_workers}
   shuffle: False
 test:
   _target_: torch.utils.data.DataLoader
   dataset:
-    _target_: dataloader.${dataset.name}.${dataset.name}
-    dataset_path: ${oc.env:DATASET_PATH}/${dataset.name}
-    subset: test
-    sampling: ${sampling}
+    _target_: dataset.${dataset.name}.${dataset.name}
+    root: ${oc.env:DATASET_PATH}/${dataset.name}
+    fold: test
+    seed: 42
+    output_size: 32
   batch_size: ${model.train.batch_size}
   num_workers: ${model.train.num_workers}
   shuffle: False

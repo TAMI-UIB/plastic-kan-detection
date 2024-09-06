@@ -35,7 +35,7 @@ class Experiment(pl.LightningModule):
         low, gt, name = input
         output = self.forward(low)
         loss, loss_dict = self.loss_criterion(output, gt)
-        self.fit_metrics['train'].update(pred=output['pred'], ref=gt['gt'])
+        self.fit_metrics['train'].update(inputs=output, targets=gt)
         self.loss_report(loss, loss_dict, 'train')
         return loss
 
@@ -43,13 +43,13 @@ class Experiment(pl.LightningModule):
         low, gt, name = input
         output = self.forward(low)
         loss, loss_dict = self.loss_criterion(output, gt)
-        self.fit_metrics['validation'].update(pred=output['pred'], ref=gt['gt'])
+        self.fit_metrics['validation'].update(inputs=output, targets=gt)
         self.loss_report(loss, loss_dict,'validation')
         return loss
     def test_step(self, batch, batch_idx, dataloader_idx=0):
         low, gt, name = batch
         output = self.forward(low)
-        self.eval_metrics[self.eval_subsets[dataloader_idx]].update(pred=output['pred'], ref=gt['gt'])
+        self.eval_metrics[self.eval_subsets[dataloader_idx]].update(inputs=output, targets=gt)
 
     def configure_optimizers(self):
         optimizer = instantiate(self.cfg.model.optimizer,params=self.parameters())

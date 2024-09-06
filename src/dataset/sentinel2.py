@@ -18,14 +18,14 @@ allregions = [
     # "biscay_20180419",
     # "danang_20181005",
     # "kentpointfarm_20180710",
-    # "kolkata_20201115",
+    "kolkata_20201115",
     # "lagos_20190101",
     # "lagos_20200505",
     # "london_20180611",
     # "longxuyen_20181102",
     # "mandaluyong_20180314",
     # "neworleans_20200202",
-    # "panama_20190425",
+    "panama_20190425",
     # "portalfredSouthAfrica_20180601",
     # "riodejaneiro_20180504",
     # "sandiego_20180804",
@@ -61,7 +61,7 @@ def get_region_split(seed=0, fractions=(0.6, 0.2, 0.2)):
     test_idxs = np.arange(np.max(val_idxs) + 1, len(shuffled_regions))
 
     return dict(train=list(shuffled_regions[train_idxs]),
-                val=list(shuffled_regions[val_idxs]),
+                validation=list(shuffled_regions[val_idxs]),
                 test=list(shuffled_regions[test_idxs]))
 
 def line_is_closed(linestringgeometry):
@@ -71,14 +71,14 @@ def line_is_closed(linestringgeometry):
     return bool((first_point == last_point).all())
 
 
-class FSODataset(torch.utils.data.Dataset):
-    def __init__(self, root, fold, seed, output_size, transform, use_l2a_probability):
+class sentinel2(torch.utils.data.Dataset):
+    def __init__(self, root, fold, seed, output_size, transform=None, use_l2a_probability=0):
 
         self.regions = get_region_split(seed)[fold]
 
         self.shapefiles = [os.path.join(root, region + '.shp') for region in self.regions]
         self.imagefiles = [os.path.join(root, region + '.tif') for region in self.regions]
-        self.l2aimagefiles = [os.path.join(root, region + '._l2a.tif') for region in self.regions]
+        self.l2aimagefiles = [os.path.join(root, region + '_l2a.tif') for region in self.regions]
         self.output_size = output_size
 
         self.crops = []
@@ -118,15 +118,6 @@ class FSODataset(torch.utils.data.Dataset):
             imagemeta = src.meta
             imagebounds = tuple(src.bounds)
 
-            # Generate a random window origin (upper left) that ensures the window
-            # doesn't go outside the image. i.e. origin can only be between
-            # 0 and image width or height less the window width or height
-            #xmin, xmax = 0, src.width - self.output_size
-            #ymin, ymax = 0, src.height - self.output_size
-            #xoff, yoff = np.random.randint(xmin, xmax), np.random.randint(ymin, ymax)
-
-            # Create a Window and calculate the transform from the source dataset
-            #window = rio.windows.Window(xoff, yoff, self.output_size, self.output_size)
             window = rio.windows.Window(window_w, window_h, self.output_size, self.output_size)
 
             win_transform = src.window_transform(window)
@@ -170,4 +161,4 @@ class FSODataset(torch.utils.data.Dataset):
             image, mask = self.transform(image, mask)
         mask = np.expand_dims(mask, axis=0)
 
-        return image, mask
+        return image, mask, idx
