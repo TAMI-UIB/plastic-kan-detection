@@ -12,11 +12,9 @@ os.environ["PROJECT_ROOT"] = os.path.dirname(os.path.dirname(os.path.abspath(__f
 
 load_dotenv(os.path.join(os.environ["PROJECT_ROOT"], ".env"))
 
-from src.callbacks.logger import MetricLogger, ImagePlotCallback, EvaluationMetricLogger
-from src.base import Experiment
+from callbacks.logger import MetricLogger, ImagePlotCallback, EvaluationMetricLogger
+from base import Experiment
 from hydra.utils import instantiate
-
-from src.callbacks.images import SaveImage
 
 
 
@@ -43,7 +41,7 @@ def train(cfg: DictConfig):
     callback_list = instantiate(cfg.model.callbacks) + default_callbacks if hasattr(cfg.model, 'callbacks') else default_callbacks
     trainer = Trainer(max_epochs=cfg.model.train.max_epochs, logger=logger,
                       devices=cfg.devices,
-                      callbacks=callback_list)
+                      callbacks=callback_list, accelerator="auto")
 
     trainer.fit(experiment, train_loader, validation_loader)
 

@@ -25,8 +25,7 @@ class Experiment(pl.LightningModule):
         self.eval_metrics = {k: instantiate(cfg.metrics) for k in self.eval_subsets}
         # Loss report
         self.fit_loss = {subset: 0 for subset in self.fit_subsets}
-        self.fit_loss_components = { subset: {k: 0 for k in self.loss_criterion.components()} for subset in self.fit_subsets}
-
+        # self.fit_loss_components = { subset: {k: 0 for k in self.loss_criterion.components()} for subset in self.fit_subsets}
 
     def forward(self, low):
         return self.model(low)
@@ -46,6 +45,7 @@ class Experiment(pl.LightningModule):
         self.fit_metrics['validation'].update(inputs=output, targets=gt)
         self.loss_report(loss, loss_dict,'validation')
         return loss
+
     def test_step(self, batch, batch_idx, dataloader_idx=0):
         low, gt, name = batch
         output = self.forward(low)
@@ -60,11 +60,11 @@ class Experiment(pl.LightningModule):
         checkpoint['cfg'] = self.cfg
         checkpoint['current_epoch'] = self.current_epoch
 
-
     def loss_report(self, loss, loss_dict, subset):
         self.fit_loss[subset] += loss
         for k, v in self.fit_loss_components[subset].items():
             self.fit_loss_components[subset][k] += loss_dict[k]
+
     def save_image(self, low, gt, name, pred, subset):
         img_path = f'{self.logger.log_dir}/images/{subset}/'
         os.makedirs(img_path, exist_ok=True)

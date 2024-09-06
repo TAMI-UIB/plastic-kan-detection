@@ -557,6 +557,7 @@ class UKAN(nn.Module):
         ### Conv Stage
 
         ### Stage 1
+        print(x.dtype)
         out = F.relu(F.max_pool2d(self.encoder1(x), 2, 2))
         t1 = out
         ### Stage 2

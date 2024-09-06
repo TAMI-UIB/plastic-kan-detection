@@ -1,12 +1,23 @@
 import math
-
 import torch
 import torch.nn.functional as F
 from timm.models.layers import DropPath, trunc_normal_
 from torch import nn
 
-from src.utils.conv import DW_bn_relu
+class ConvLayer(nn.Module):
+    def __init__(self, in_ch, out_ch):
+        super(ConvLayer, self).__init__()
+        self.conv = nn.Sequential(
+            nn.Conv2d(in_ch, out_ch, 3, padding=1),
+            nn.BatchNorm2d(out_ch),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(out_ch, out_ch, 3, padding=1),
+            nn.BatchNorm2d(out_ch),
+            nn.ReLU(inplace=True)
+        )
 
+    def forward(self, input):
+        return self.conv(input)
 
 class KANLinear(nn.Module):
     def __init__(
