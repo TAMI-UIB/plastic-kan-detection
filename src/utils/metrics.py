@@ -1,16 +1,15 @@
-import torch
 import numpy as np
-
-
-from torchmetrics.functional.image import structural_similarity_index_measure as SSIM
-from torchmetrics.functional.image import spectral_angle_mapper as SAM
-from torchmetrics.functional.image import error_relative_global_dimensionless_synthesis as ERGAS
-from torchmetrics.functional.image import peak_signal_noise_ratio as PSNR
+import torch
+from torchmetrics.functional.classification import binary_accuracy, dice, binary_jaccard_index, binary_precision, \
+    binary_recall, binary_specificity
 
 metrics_dict = {
-    'ergas': ERGAS,
-    'psnr': PSNR,
-    'ssim': SSIM,
+    'precision': binary_precision,
+    'recall': binary_recall,
+    'specificity': binary_specificity,
+    'accuracy': binary_accuracy,
+    'dice': dice,
+    'iou': binary_jaccard_index,
 }
 class MetricCalculator:
     def __init__(self,  metrics_list):
@@ -18,13 +17,10 @@ class MetricCalculator:
         self.dict = {k: [] for k in self.metrics.keys()}
 
     def update(self, inputs, targets):
+        inputs = torch.where(torch.exp(inputs) > 0.5, 1, 0)
         for i in range(inputs.size(0)):
             for k, v in self.metrics.items():
-                match k:
-                    case 'ergas' | 'sam':
-                        self.dict[k].append(v(inputs[i].unsqueeze(0), targets[i].unsqueeze(0)).cpu().detach().numpy())
-                    case _:
-                        self.dict[k].append(v(inputs[i].unsqueeze(0), targets[i].unsqueeze(0), data_range=1).cpu().detach().numpy())
+                self.dict[k].append(v(inputs[i].unsqueeze(0), targets[i].unsqueeze(0), data_range=1).cpu().detach().numpy())
 
 
     def clean(self):
