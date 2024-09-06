@@ -157,8 +157,8 @@ class sentinel2(torch.utils.data.Dataset):
         mask = mask.astype(float)
         image = image.astype(float)
 
-        if self.transform is not None:
-            image, mask = self.transform(image, mask)
-        mask = np.expand_dims(mask, axis=0)
+        image *= 1e-4
+        image = torch.Tensor(image)
+        mask = torch.Tensor(np.expand_dims(mask, axis=0))
 
         return image, mask, idx

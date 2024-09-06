@@ -11,21 +11,20 @@ metrics_dict = {
     'ergas': ERGAS,
     'psnr': PSNR,
     'ssim': SSIM,
-    'sam': SAM,
 }
 class MetricCalculator:
     def __init__(self,  metrics_list):
         self.metrics = {opt: metrics_dict[opt] for opt in metrics_list}
         self.dict = {k: [] for k in self.metrics.keys()}
 
-    def update(self, ref, pred):
-        for i in range(ref.size(0)):
+    def update(self, inputs, targets):
+        for i in range(inputs.size(0)):
             for k, v in self.metrics.items():
                 match k:
                     case 'ergas' | 'sam':
-                        self.dict[k].append(v(ref[i].unsqueeze(0), pred[i].unsqueeze(0)).cpu().detach().numpy())
+                        self.dict[k].append(v(inputs[i].unsqueeze(0), targets[i].unsqueeze(0)).cpu().detach().numpy())
                     case _:
-                        self.dict[k].append(v(ref[i].unsqueeze(0), pred[i].unsqueeze(0), data_range=1).cpu().detach().numpy())
+                        self.dict[k].append(v(inputs[i].unsqueeze(0), targets[i].unsqueeze(0), data_range=1).cpu().detach().numpy())
 
 
     def clean(self):

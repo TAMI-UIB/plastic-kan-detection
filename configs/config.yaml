@@ -17,7 +17,6 @@ metrics:
   metrics_list:
     - psnr
     - ssim
-    - sam
     - ergas
 nickname: "default"
 plot_interval: 250

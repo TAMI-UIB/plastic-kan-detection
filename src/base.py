@@ -25,7 +25,7 @@ class Experiment(pl.LightningModule):
         self.eval_metrics = {k: instantiate(cfg.metrics) for k in self.eval_subsets}
         # Loss report
         self.fit_loss = {subset: 0 for subset in self.fit_subsets}
-        # self.fit_loss_components = { subset: {k: 0 for k in self.loss_criterion.components()} for subset in self.fit_subsets}
+        self.fit_loss_components = { subset: {k: 0 for k in self.loss_criterion.components()} for subset in self.fit_subsets}
 
     def forward(self, low):
         return self.model(low)
@@ -33,6 +33,7 @@ class Experiment(pl.LightningModule):
     def training_step(self, input, idx):
         low, gt, name = input
         output = self.forward(low)
+        print(output.shape, gt.shape)
         loss, loss_dict = self.loss_criterion(output, gt)
         self.fit_metrics['train'].update(inputs=output, targets=gt)
         self.loss_report(loss, loss_dict, 'train')
@@ -41,6 +42,7 @@ class Experiment(pl.LightningModule):
     def validation_step(self, input, idx):
         low, gt, name = input
         output = self.forward(low)
+        print(output.shape, gt.shape)
         loss, loss_dict = self.loss_criterion(output, gt)
         self.fit_metrics['validation'].update(inputs=output, targets=gt)
         self.loss_report(loss, loss_dict,'validation')

@@ -1,5 +1,5 @@
 name: sentinel2
-ms_channels: 8
+ms_channels: 12
 train:
   _target_: torch.utils.data.DataLoader
   dataset:
