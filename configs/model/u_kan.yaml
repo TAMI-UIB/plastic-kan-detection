@@ -2,11 +2,9 @@ name: "UKAN"
 goal: u_kan
 shared: False
 module:
-  _target_: model.${model.goal}.${model.name}
+  _target_: model.u_kan.UKAN
   _recursive_: False
   channels: ${dataset.ms_channels}
-  sampling: ${sampling}
-  iter_stages: 3
 train:
   batch_size: 32
   num_workers: 16
