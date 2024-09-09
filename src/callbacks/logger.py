@@ -48,7 +48,7 @@ class MetricLogger(Callback):
         self.path_dir = path_dir
         self.day = day
         self.name = name
-        self.best_psnr = -99999
+        self.best_iou = -99999
 
         os.makedirs(f'{path_dir}/experiment-report/') if not os.path.exists(f'{path_dir}/experiment-report/') else None
 
@@ -65,7 +65,7 @@ class MetricLogger(Callback):
         writer.add_scalars(f"loss/comparison", {k: v for k, v in pl_module.fit_loss.items()}, epoch)
         all_statistics = {k: v.get_statistics() for k, v in pl_module.fit_metrics.items()}
         # Log the reference metric for saving checkpoints
-        pl_module.log('val_psnr', all_statistics['validation']['mean']['psnr'], prog_bar=True)
+        pl_module.log('val_iou', all_statistics['validation']['mean']['iou'], prog_bar=True)
         for metric in all_statistics['train']['mean'].keys():
             writer.add_scalars(f"{metric}/comparison", {k: v['mean'][metric] for k, v in all_statistics.items()}, epoch)
         for subset in pl_module.fit_subsets:
@@ -74,8 +74,8 @@ class MetricLogger(Callback):
                 writer.add_scalar(f"{k}/{subset}", v, epoch)
             writer.add_scalars(f"loss/{subset}_components", pl_module.fit_loss_components[subset], epoch)
             writer.add_scalar(f"loss/{subset}", pl_module.fit_loss[subset], epoch)
-        if subset == "validation" and statistics['mean']['psnr'] > self.best_psnr:
-            self.best_psnr = statistics['mean']['psnr']
+        if subset == "validation" and statistics['mean']['iou'] > self.best_iou:
+            self.best_iou = statistics['mean']['iou']
             self.best_metrics['validation'] = statistics['mean']
             self.best_metrics['train'] = pl_module.fit_metrics['train'].get_statistics()['mean']
             writer.add_text("best_metrics",str(statistics['mean']), global_step=epoch)
@@ -116,13 +116,13 @@ class ImagePlotCallback(pl.Callback):
                 # Recorre el DataLoader de validación
                 batch = next(iter(trainer.val_dataloaders))
                 low, gt, name = batch
-                low=low.to(pl_module.device)
+                low = low.to(pl_module.device)
 
-                outputs = pl_module(low)
-                target_rgb = trainer.val_dataloaders.dataset.get_rgb(gt['gt'])
-                pred_rgb = trainer.val_dataloaders.dataset.get_rgb(outputs['pred'])
-                gt_list.extend(torch.clamp(target_rgb,min=0, max=1).cpu().numpy())
-                pred_list.extend(torch.clamp(pred_rgb,min=0,max=1).cpu().numpy())
+                # outputs = pl_module(low)
+                # target_rgb = trainer.val_dataloaders.dataset.get_rgb(gt)
+                # pred_rgb = trainer.val_dataloaders.dataset.get_rgb(outputs)
+                # gt_list.extend(torch.clamp(target_rgb, min=0, max=1).cpu().numpy())
+                # pred_list.extend(torch.clamp(pred_rgb, min=0, max=1).cpu().numpy())
 
             # Vuelve al modo de entrenamiento
             pl_module.train()

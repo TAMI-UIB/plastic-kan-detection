@@ -17,7 +17,6 @@ from base import Experiment
 from hydra.utils import instantiate
 
 
-
 @hydra.main(config_path="../configs", config_name="config", version_base="1.3")
 def train(cfg: DictConfig):
 

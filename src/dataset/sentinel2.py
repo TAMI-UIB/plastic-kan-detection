@@ -1,45 +1,45 @@
-import torch
-from rasterio.windows import from_bounds
-import rasterio as rio
-from rasterio import features
-from shapely.geometry import LineString, Polygon
-import geopandas as gpd
 import os
+
+import geopandas as gpd
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-
+import rasterio as rio
+import torch
+from rasterio import features
+from rasterio.windows import from_bounds
+from shapely.geometry import Polygon
+from skimage.exposure import equalize_hist
 
 l1cbands = ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B8A", "B9", "B10", "B11", "B12"]
 l2abands = ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B8A", "B9", "B11", "B12"]
 
 allregions = [
-    # "accra_20181031",
-    # "biscay_20180419",
-    # "danang_20181005",
-    # "kentpointfarm_20180710",
+    "accra_20181031",
+    "biscay_20180419",
+    "danang_20181005",
+    "kentpointfarm_20180710",
     "kolkata_20201115",
-    # "lagos_20190101",
-    # "lagos_20200505",
-    # "london_20180611",
-    # "longxuyen_20181102",
-    # "mandaluyong_20180314",
-    # "neworleans_20200202",
+    "lagos_20190101",
+    "lagos_20200505",
+    "london_20180611",
+    "longxuyen_20181102",
+    "mandaluyong_20180314",
+    "neworleans_20200202",
     "panama_20190425",
-    # "portalfredSouthAfrica_20180601",
-    # "riodejaneiro_20180504",
-    # "sandiego_20180804",
-    # "sanfrancisco_20190219",
-    # "shengsi_20190615",
-    # "suez_20200403",
-    # "tangshan_20180130",
-    # "toledo_20191221",
-    # "tungchungChina_20190922",
-    # "tunisia_20180715",
-    # "turkmenistan_20181030",
+    "portalfredSouthAfrica_20180601",
+    "riodejaneiro_20180504",
+    "sandiego_20180804",
+    "sanfrancisco_20190219",
+    "shengsi_20190615",
+    "suez_20200403",
+    "tangshan_20180130",
+    "toledo_20191221",
+    "tungchungChina_20190922",
+    "tunisia_20180715",
+    "turkmenistan_20181030",
     "venice_20180630",
-    # "venice_20180928",
-    # "vungtau_20180423"
+    "venice_20180928",
+    "vungtau_20180423"
     ]
 
 
@@ -162,3 +162,7 @@ class sentinel2(torch.utils.data.Dataset):
         mask = torch.Tensor(np.expand_dims(mask, axis=0))
 
         return image, mask, idx
+
+    @staticmethod
+    def get_rgb(image):
+        return equalize_hist(image[np.array([3,2,1])])

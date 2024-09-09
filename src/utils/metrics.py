@@ -18,9 +18,10 @@ class MetricCalculator:
 
     def update(self, inputs, targets):
         inputs = torch.where(torch.exp(inputs) > 0.5, 1, 0)
+        targets = targets.int()
         for i in range(inputs.size(0)):
             for k, v in self.metrics.items():
-                self.dict[k].append(v(inputs[i].unsqueeze(0), targets[i].unsqueeze(0), data_range=1).cpu().detach().numpy())
+                self.dict[k].append(v(inputs[i].unsqueeze(0), targets[i].unsqueeze(0)).cpu().detach().numpy())
 
 
     def clean(self):
