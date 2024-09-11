@@ -17,6 +17,7 @@ class EvaluationMetricLogger(Callback):
         self.name = name
         self.path = path
         self.day = day
+
     def on_test_epoch_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
         filename = [f'{self.path}/evaluation-report/{k}_sampling_{pl_module.cfg.sampling}.csv' for k in trainer.test_dataloaders.keys()]
         subset = trainer.test_dataloaders.keys()
@@ -55,9 +56,10 @@ class MetricLogger(Callback):
     def on_train_epoch_start(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
         for subset in pl_module.fit_subsets:
             pl_module.fit_metrics[subset].clean()
-            pl_module.fit_loss[subset]=0
+            pl_module.fit_loss[subset] = 0
             for k, v in pl_module.fit_loss_components[subset].items():
                 pl_module.fit_loss_components[subset][k] = 0
+
     def on_validation_epoch_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
         logger = trainer.logger
         writer = logger.experiment
@@ -78,13 +80,13 @@ class MetricLogger(Callback):
             self.best_iou = statistics['mean']['iou']
             self.best_metrics['validation'] = statistics['mean']
             self.best_metrics['train'] = pl_module.fit_metrics['train'].get_statistics()['mean']
-            writer.add_text("best_metrics",str(statistics['mean']), global_step=epoch)
+            writer.add_text("best_metrics", str(statistics['mean']), global_step=epoch)
 
     def on_fit_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
         file_name = {k: f'{self.path_dir}/experiment-report/{k}_sampling_{pl_module.cfg.sampling}.csv' for k in pl_module.fit_subsets}
         for subset in pl_module.fit_subsets:
             # download_drive(file_name[subset], pl_module.cfg.dataset.name)
-            csv_logger = pd.read_csv(file_name[subset])  if os.path.exists(file_name[subset]) else pd.DataFrame()
+            csv_logger = pd.read_csv(file_name[subset]) if os.path.exists(file_name[subset]) else pd.DataFrame()
             data = {"day": [str(self.day)],
                     "model": [self.name],
                     "nickname": [f'=HYPERLINK("{trainer.logger.log_dir}"; "{pl_module.cfg.nickname}")'],
@@ -145,7 +147,9 @@ class ImagePlotCallback(pl.Callback):
             plt.tight_layout()
             # Agregar la imagen a TensorBoard
             trainer.logger.experiment.add_figure(f'{pl_module.cfg.model.name}_{pl_module.cfg.nickname}/gt_vs_pred', fig,
-                                                trainer.current_epoch)
+                                                 trainer.current_epoch)
+
+
 class TestMetricPerImage(Callback):
     def __init__(self, ) -> None:
         super(TestMetricPerImage, self).__init__()

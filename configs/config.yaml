@@ -26,7 +26,7 @@ nickname: "default"
 plot_interval: 250
 checkpoint:
   _target_:  pytorch_lightning.callbacks.ModelCheckpoint
-  monitor: 'val_psnr'
+  monitor: 'val_iou'
   filename: 'best'
   save_last: True
   mode: 'max'
