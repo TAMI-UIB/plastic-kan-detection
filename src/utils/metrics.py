@@ -1,17 +1,11 @@
 import numpy as np
 import torch
-import torch.nn as nn
 
 from torchmetrics.functional.classification import binary_accuracy, dice, binary_precision, \
     binary_recall, binary_specificity
 
 
-class IoU(nn.Module):
-    def __init__(self, smooth=1):
-        super(IoU, self).__init__()
-        self.smooth = smooth
-
-    def forward(self, inputs, targets):
+def IoU(inputs, targets, smooth=1):
         inputs = torch.sigmoid(inputs)
 
         # flatten label and prediction tensors
@@ -24,7 +18,7 @@ class IoU(nn.Module):
         total = (inputs + targets).sum()
         union = total - intersection
 
-        result = (intersection + self.smooth) / (union + self.smooth)
+        result = (intersection + smooth) / (union + smooth)
 
         return 1 - result
 

@@ -61,6 +61,9 @@ class DiceBCEIOULoss(nn.Module):
     def __init__(self):
         super(DiceBCEIOULoss, self).__init__()
 
+    def components(self):
+        return ['bce', 'dice', 'iou']
+
     def forward(self, inputs, targets, smooth=1):
         # comment out if your model contains a sigmoid or equivalent activation layer
         inputs = torch.sigmoid(inputs)

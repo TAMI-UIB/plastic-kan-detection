@@ -80,14 +80,15 @@ class Decoder(nn.Module):
         x = self.doble_conv(x)
         return x
 
+
 class UNet(nn.Module):
     """
     U-Net: Convolutional Networks for Biomedical Image Segmentation
     https://arxiv.org/abs/1505.04597
     """
-    def __init__(self, input_channels, hidden_channels, n_classes, BN):
+    def __init__(self, channels, hidden_channels, n_classes=1, BN=True):
         super(UNet, self).__init__()
-        self.doble_conv = DobleConv(input_channels, hidden_channels, hidden_channels, BN)
+        self.doble_conv = DobleConv(channels, hidden_channels, hidden_channels, BN)
 
         self.Encoder1 = Encoder(hidden_channels, hidden_channels * 2, hidden_channels * 2, BN)
         self.Encoder2 = Encoder(hidden_channels * 2, hidden_channels * 4, hidden_channels * 4, BN)

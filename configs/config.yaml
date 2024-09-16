@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - model: deep_u_net
+  - model: u_net
   - dataset: sentinel2
 save_image: True
 sampling: 4
@@ -11,7 +11,7 @@ hydra:
 # Otros parámetros globales
 seed: 42
 devices:
-  - 1
+  - 0
 day: ${now:%Y-%m-%d}
 metrics:
   _target_: utils.metrics.MetricCalculator
@@ -23,7 +23,7 @@ metrics:
     - dice
     - iou
 nickname: "default"
-plot_interval: 250
+plot_interval: 2
 checkpoint:
   _target_:  pytorch_lightning.callbacks.ModelCheckpoint
   monitor: 'val_iou'

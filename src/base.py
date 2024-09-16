@@ -33,7 +33,6 @@ class Experiment(pl.LightningModule):
     def training_step(self, input, idx):
         low, gt, name = input
         output = self.forward(low)
-        print(output.shape, gt.shape)
         loss, loss_dict = self.loss_criterion(output, gt)
         self.fit_metrics['train'].update(inputs=output, targets=gt)
         self.loss_report(loss, loss_dict, 'train')
@@ -42,7 +41,6 @@ class Experiment(pl.LightningModule):
     def validation_step(self, input, idx):
         low, gt, name = input
         output = self.forward(low)
-        print(output.shape, gt.shape)
         loss, loss_dict = self.loss_criterion(output, gt)
         self.fit_metrics['validation'].update(inputs=output, targets=gt)
         self.loss_report(loss, loss_dict,'validation')
