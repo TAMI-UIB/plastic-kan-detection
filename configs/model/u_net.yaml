@@ -1,8 +1,8 @@
-name: DeepUNet
-goal: deep_u_net
+name: UNet
+goal: u_net
 shared: False
 module:
-  _target_: model.deep_u_net.DeepUNet
+  _target_: model.u_net.UNet
   _recursive_: False
   channels: ${dataset.ms_channels}
 train:
