@@ -7,12 +7,12 @@ import rasterio as rio
 import torch
 from rasterio import features
 from rasterio.windows import from_bounds
+from shapely.geometry import LineString
 from shapely.geometry import Polygon
-from skimage.exposure import equalize_hist
 
 l1cbands = ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B8A", "B9", "B10", "B11", "B12"]
 l2abands = ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B8A", "B9", "B11", "B12"]
-
+HARD_NEGATIVE_MINING_SAMPLE_BORDER_OFFSET = 1000
 allregions = [
     "accra_20181031",
     "biscay_20180419",
@@ -70,99 +70,175 @@ def line_is_closed(linestringgeometry):
     last_point = coordinates[-1]
     return bool((first_point == last_point).all())
 
+def split_line_gdf_into_segments(lines):
+    def segments(curve):
+        return list(map(LineString, zip(curve.coords[:-1], curve.coords[1:])))
 
-class sentinel2(torch.utils.data.Dataset):
-    def __init__(self, root, fold, seed, output_size, transform=None, use_l2a_probability=0):
+    line_segments = []
+    for geometry in lines.geometry:
+        line_segments += segments(geometry)
+    return gpd.GeoDataFrame(geometry=line_segments)
 
-        self.regions = get_region_split(seed)[fold]
+class FloatingSeaObjectRegionDataset(torch.utils.data.Dataset):
+    def __init__(self, root, region, output_size=64,
+                 transform=None, hard_negative_mining=False,
+                 use_l2a_probability=0.5):
 
-        self.shapefiles = [os.path.join(root, region + '.shp') for region in self.regions]
-        self.imagefiles = [os.path.join(root, region + '.tif') for region in self.regions]
-        self.l2aimagefiles = [os.path.join(root, region + '_l2a.tif') for region in self.regions]
+        shapefile = os.path.join(root, region + ".shp")
+        imagefile = os.path.join(root, region + ".tif")
+        imagefilel2a = os.path.join(root, region + "_l2a.tif")
+
+        # if 0.5 use 50% of time L2A image (if available)
+        # if 0 only L1C images are used
+        # if 1 only L2A images are used
+        self.use_l2a_probability = 0.5
+
+        # return zero-element dataset if use_l2a_probability=1 but l2a file not available
+        if use_l2a_probability == 1 and not os.path.exists(imagefilel2a):
+            self.lines = []
+            return  # break early out of this function
+
+        self.transform = transform
+        self.region = region
+
+        self.imagefile = imagefile
+        self.imagefilel2a = imagefilel2a
         self.output_size = output_size
 
-        self.crops = []
-        for idx, imagefile in enumerate(self.imagefiles):
-            with rio.open(imagefile) as src:
-                w, h = src.width, src.height
-                n_crops_w = w // output_size
-                border_w = (w - output_size * n_crops_w) // 2
-
-                n_crops_h = h // output_size
-                border_h = (h - output_size * n_crops_h) // 2
-                #for x in range(border_w, w - output_size, output_size):
-                #    for y in range(border_h, h - output_size, output_size):
-                #        self.crops.append((idx, x, y))
-                for x in range(n_crops_w):
-                    for y in range(n_crops_h):
-                        self.crops.append((idx, border_w + output_size * x, border_h + output_size * y))
-                src.close()
-
-        self.use_l2a_probability = use_l2a_probability
-        self.transform = transform
-
-    def __len__(self):
-        return len(self.crops)
-
-    def __getitem__(self, idx):
-        image_id, window_w, window_h = self.crops[idx]
-        shapefile = self.shapefiles[image_id]
-        imagefile = self.imagefiles[image_id]
-        l2aimagefile = self.l2aimagefiles[image_id]
-
-        if os.path.exists(l2aimagefile):
-            if np.random.rand() < self.use_l2a_probability:
-                imagefile = l2aimagefile
-
         with rio.open(imagefile) as src:
-            imagemeta = src.meta
-            imagebounds = tuple(src.bounds)
-
-            window = rio.windows.Window(window_w, window_h, self.output_size, self.output_size)
-
-            win_transform = src.window_transform(window)
-            image = src.read(window=window)
-
-            if image.shape[0] == 13:  # is L1C Sentinel 2 dataset
-                image = image[[l1cbands.index(b) for b in l2abands]]
-
-            """
-            rgb = image[[3, 2, 1], :, :]
-            from skimage.exposure import equalize_hist
-            plt.imshow(equalize_hist(np.moveaxis(rgb, 0, -1)))
-            plt.show()
-            """
-
-        def within_image(geometry):
-            left, bottom, right, top = geometry.bounds
-            ileft, ibottom, iright, itop = imagebounds
-            return ileft < left and iright > right and itop > top and ibottom < bottom
+            self.imagemeta = src.meta
+            self.imagebounds = tuple(src.bounds)
 
         lines = gpd.read_file(shapefile)
-        lines = lines.to_crs(imagemeta["crs"])
+        lines = lines.to_crs(self.imagemeta["crs"])
 
+        # find closed lines, convert them to polygons and store them separately for later rasterization
         is_closed_line = lines.geometry.apply(line_is_closed)
         rasterize_polygons = lines.loc[is_closed_line].geometry.apply(Polygon)
-        lines = lines.loc[lines.geometry.apply(within_image)]
-        rasterize_lines = lines.geometry
-        rasterize_geometries = pd.concat([rasterize_lines, rasterize_polygons])
 
-        mask = features.rasterize(rasterize_geometries, all_touched=True,
+        self.lines = split_line_gdf_into_segments(lines)
+
+        self.lines["is_hnm"] = False
+        if hard_negative_mining:
+            random_points = self.sample_points_for_hard_negative_mining()
+            random_points["is_hnm"] = True
+            self.lines = pd.concat([self.lines, random_points]).reset_index(drop=True)
+
+        # remove line segments that are outside the image bounds
+        self.lines = self.lines.loc[self.lines.geometry.apply(self.within_image)]
+
+        # take lines to rasterize
+        rasterize_lines = self.lines.loc[~self.lines["is_hnm"]].geometry
+
+        # combine with polygons to rasterize
+        self.rasterize_geometries = pd.concat([rasterize_lines, rasterize_polygons])
+
+    def within_image(self, geometry):
+        left, bottom, right, top = geometry.bounds
+        ileft, ibottom, iright, itop = self.imagebounds
+        return ileft < left and iright > right and itop > top and ibottom < bottom
+
+    def sample_points_for_hard_negative_mining(self):
+        # hard negative mining:
+        # get some random negatives from the image bounds to ensure that the model can learn on negative examples
+        # e.g. land, clouds, etc
+
+        with rio.open(self.imagefile) as src:
+            left, bottom, right, top = src.bounds
+
+        offset = HARD_NEGATIVE_MINING_SAMPLE_BORDER_OFFSET  # m
+        assert top - bottom > 2 * HARD_NEGATIVE_MINING_SAMPLE_BORDER_OFFSET, f"Hard Negative Mining offset 2x{HARD_NEGATIVE_MINING_SAMPLE_BORDER_OFFSET}m too large for the image height: {top - bottom}m"
+        assert right - left > 2 * HARD_NEGATIVE_MINING_SAMPLE_BORDER_OFFSET, f"Hard Negative Mining offset 2x{HARD_NEGATIVE_MINING_SAMPLE_BORDER_OFFSET}m too large for the image width: {right - left}m"
+        N_random_points = len(self.lines)
+
+        # sample random x positions within bounds
+        zx = np.random.rand(N_random_points)
+        zx *= ((right - offset) - (left + offset))
+        zx += left + offset
+
+        # sample random y positions within bounds
+        zy = np.random.rand(N_random_points)
+        zy *= ((top - offset) - (bottom + offset))
+        zy += bottom + offset
+
+        return gpd.GeoDataFrame(geometry=gpd.points_from_xy(zx, zy))
+
+    def __len__(self):
+        return len(self.lines)
+
+    def __getitem__(self, index):
+        line = self.lines.iloc[index]
+        left, bottom, right, top = line.geometry.bounds
+
+        width = right - left
+        height = top - bottom
+
+        # buffer_left_right = (self.output_size[0] * 10 - width) / 2
+        buffer_left_right = (self.output_size * 10 - width) / 2
+        left -= buffer_left_right
+        right += buffer_left_right
+
+        # buffer_bottom_top = (self.output_size[1] * 10 - height) / 2
+        buffer_bottom_top = (self.output_size * 10 - height) / 2
+        bottom -= buffer_bottom_top
+        top += buffer_bottom_top
+
+        window = from_bounds(left, bottom, right, top, self.imagemeta["transform"])
+
+        imagefile = self.imagefile
+
+        if os.path.exists(self.imagefilel2a):
+            if np.random.rand() > self.use_l2a_probability:
+                imagefile = self.imagefilel2a
+
+        with rio.open(imagefile) as src:
+            image = src.read(window=window)
+            # keep only 12 bands: delete 10th band (nb: 9 because start idx=0)
+            if (image.shape[0] == 13):  # is L1C Sentinel 2 data
+                image = image[[l1cbands.index(b) for b in l2abands]]
+
+            win_transform = src.window_transform(window)
+
+        h_, w_ = image[0].shape
+        assert h_ > 0 and w_ > 0, f"{self.region}-{index} returned image size {image[0].shape}"
+        # only rasterize the not-hard negative mining samples
+
+        mask = features.rasterize(self.rasterize_geometries, all_touched=True,
                                   transform=win_transform, out_shape=image[0].shape)
-        """
-        plt.imshow(mask, cmap='gray')
-        plt.show()
-        """
+
+        # if feature is near the image border, image wont be the desired output size
+        H, W = self.output_size, self.output_size
+        c, h, w = image.shape
+        dh = (H - h) / 2
+        dw = (W - w) / 2
+        image = np.pad(image, [(0, 0), (int(np.ceil(dh)), int(np.floor(dh))),
+                               (int(np.ceil(dw)), int(np.floor(dw)))])
+
+        mask = np.pad(mask, [(int(np.ceil(dh)), int(np.floor(dh))),
+                             (int(np.ceil(dw)), int(np.floor(dw)))])
 
         mask = mask.astype(float)
         image = image.astype(float)
 
-        image *= 1e-4
-        image = torch.Tensor(image)
-        mask = torch.Tensor(np.expand_dims(mask, axis=0))
+        # image = np.nan_to_num(image)
 
-        return image, mask, idx
+        if self.transform is not None:
+            image, mask = self.transform(image, mask)
 
-    @staticmethod
-    def get_rgb(image):
-        return equalize_hist(image[np.array([3,2,1])])
+        assert not np.isnan(image).any()
+        assert not np.isnan(mask).any()
+
+        return image, mask
+
+
+class sentinel2(torch.utils.data.ConcatDataset):
+    def __init__(self, root, fold="train", seed=0, **kwargs):
+        assert fold in ["train", "val", "test"]
+
+        # make regions variable available to the outside
+        self.regions = get_region_split(seed)[fold]
+
+        # initialize a concat dataset with the corresponding regions
+        super().__init__(
+            [FloatingSeaObjectRegionDataset(root, region, **kwargs) for region in self.regions]
+        )
