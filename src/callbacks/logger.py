@@ -7,7 +7,7 @@ import torch
 from matplotlib import pyplot as plt
 from pytorch_lightning.callbacks import Callback
 
-
+from ..utils.images import s2_to_rgb, calculate_ndvi, calculate_fdi
 # from .upload_drive import upload_drive, download_drive
 
 
@@ -67,6 +67,8 @@ class MetricLogger(Callback):
         writer.add_scalars(f"loss/comparison", {k: v for k, v in pl_module.fit_loss.items()}, epoch)
         all_statistics = {k: v.get_statistics() for k, v in pl_module.fit_metrics.items()}
         # Log the reference metric for saving checkpoints
+        monitor = pl_module.cfg.checkpoint.monitor
+        print(monitor)
         pl_module.log('val_iou', all_statistics['validation']['mean']['iou'], prog_bar=True)
         for metric in all_statistics['train']['mean'].keys():
             writer.add_scalars(f"{metric}/comparison", {k: v['mean'][metric] for k, v in all_statistics.items()}, epoch)
@@ -117,14 +119,10 @@ class ImagePlotCallback(pl.Callback):
             with torch.no_grad():
                 # Recorre el DataLoader de validación
                 batch = next(iter(trainer.val_dataloaders))
-                low, gt, name = batch
-                low = low.to(pl_module.device)
+                images, masks, name = batch
+                images = images.to(pl_module.device)
 
-                # outputs = pl_module(low)
-                # target_rgb = trainer.val_dataloaders.dataset.get_rgb(gt)
-                # pred_rgb = trainer.val_dataloaders.dataset.get_rgb(outputs)
-                # gt_list.extend(torch.clamp(target_rgb, min=0, max=1).cpu().numpy())
-                # pred_list.extend(torch.clamp(pred_rgb, min=0, max=1).cpu().numpy())
+                preds = pl_module(images)
 
             # Vuelve al modo de entrenamiento
             pl_module.train()
@@ -136,14 +134,29 @@ class ImagePlotCallback(pl.Callback):
             N = min(max(gt_list.shape[0],2), 5)
 
             # Crear un grid de imágenes
-            fig, axes = plt.subplots(N, 2, figsize=(15, 7.5 * N))
-            for i in range(min(gt_list.shape[0], 5)):
-                gt_img = gt_list[i]
-                pred_img = pred_list[i]
-                axes[i, 0].imshow(np.transpose(gt_img, (1, 2, 0)))
-                axes[i, 0].set_title(f'Ground Truth {i + 1}')
-                axes[i, 1].imshow(np.transpose(pred_img, (1, 2, 0)))
-                axes[i, 1].set_title(f'Prediction {i + 1}')
+            preds_exp = np.where(np.exp(preds) > 0.5, 1, 0)
+            preds_sig = np.where(torch.sigmoid(torch.tensor(preds)).detach().cpu().numpy() > 0.5, 1, 0)
+
+            height = 3
+            width = 3
+            fig, axs = plt.subplots(N, 6, figsize=(6 * width, N * height), squeeze=False)
+            for axs_row, img, mask, pred, pred_exp, pred_sig in zip(axs, images, masks, preds, preds_exp,
+                                                                          preds_sig):
+                axs_row[0].imshow(s2_to_rgb(img))
+                axs_row[0].set_title("RGB")
+                axs_row[1].imshow(calculate_ndvi(img), cmap="viridis")
+                axs_row[1].set_title("NDVI")
+                axs_row[2].imshow(calculate_fdi(img), cmap="magma")
+                axs_row[2].set_title("FDI")
+                axs_row[3].imshow(mask[0, :, :], cmap='gray', vmin=0, vmax=1)
+                axs_row[3].set_title("Mask")
+                axs_row[4].imshow(pred, cmap='gray', vmin=-1, vmax=2)
+                axs_row[4].set_title("Prediction")
+                axs_row[5].imshow(pred_exp, cmap='gray', vmin=0, vmax=1)
+                axs_row[5].set_title("Binary prediction")
+
+                [ax.axis("off") for ax in axs_row]
+
             plt.tight_layout()
             # Agregar la imagen a TensorBoard
             trainer.logger.experiment.add_figure(f'{pl_module.cfg.model.name}_{pl_module.cfg.nickname}/gt_vs_pred', fig,

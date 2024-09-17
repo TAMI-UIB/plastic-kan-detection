@@ -20,7 +20,7 @@ def IoU(inputs, targets, smooth=1):
 
         result = (intersection + smooth) / (union + smooth)
 
-        return 1 - result
+        return result
 
 
 metrics_dict = {
