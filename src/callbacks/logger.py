@@ -65,9 +65,9 @@ class MetricLogger(Callback):
         writer.add_scalars(f"loss/comparison", {k: v for k, v in pl_module.fit_loss.items()}, epoch)
         all_statistics = {k: v.get_statistics() for k, v in pl_module.fit_metrics.items()}
         # Log the reference metric for saving checkpoints
-        monitor = pl_module.cfg.checkpoint.monitor
-        print(monitor)
-        pl_module.log('val_iou', all_statistics['validation']['mean']['iou'], prog_bar=True)
+        stage = pl_module.cfg.checkpoint.monitor.split('_')[0]
+        metric = pl_module.cfg.checkpoint.monitor.split('_')[-1]
+        pl_module.log(pl_module.cfg.checkpoint.monitor, all_statistics[stage]['mean'][metric], prog_bar=True)
         for metric in all_statistics['train']['mean'].keys():
             writer.add_scalars(f"{metric}/comparison", {k: v['mean'][metric] for k, v in all_statistics.items()}, epoch)
         for subset in pl_module.fit_subsets:

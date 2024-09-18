@@ -8,7 +8,7 @@ module:
 train:
   batch_size: 100
   num_workers: 16
-  max_epochs: 20
+  max_epochs: 40
 loss:
   _target_: loss.DiceBCELoss
 

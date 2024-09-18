@@ -16,32 +16,32 @@ l2abands = ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B8A", "B9", "B11", 
 
 HARD_NEGATIVE_MINING_SAMPLE_BORDER_OFFSET = 1000
 allregions = [
-    # "accra_20181031",
-    # "biscay_20180419",
-    # "danang_20181005",
-    # "kentpointfarm_20180710",
+    "accra_20181031",
+    "biscay_20180419",
+    "danang_20181005",
+    "kentpointfarm_20180710",
     "kolkata_20201115",
-    # "lagos_20190101",
-    # "lagos_20200505",
-    # "london_20180611",
-    # "longxuyen_20181102",
-    # "mandaluyong_20180314",
-    # "neworleans_20200202",
+    "lagos_20190101",
+    "lagos_20200505",
+    "london_20180611",
+    "longxuyen_20181102",
+    "mandaluyong_20180314",
+    "neworleans_20200202",
     "panama_20190425",
-    # "portalfredSouthAfrica_20180601",
-    # "riodejaneiro_20180504",
-    # "sandiego_20180804",
-    # "sanfrancisco_20190219",
-    # "shengsi_20190615",
-    # "suez_20200403",
-    # "tangshan_20180130",
-    # "toledo_20191221",
-    # "tungchungChina_20190922",
-    # "tunisia_20180715",
+    "portalfredSouthAfrica_20180601",
+    "riodejaneiro_20180504",
+    "sandiego_20180804",
+    "sanfrancisco_20190219",
+    "shengsi_20190615",
+    "suez_20200403",
+    "tangshan_20180130",
+    "toledo_20191221",
+    "tungchungChina_20190922",
+    "tunisia_20180715",
     # "turkmenistan_20181030",
     "venice_20180630",
-    # "venice_20180928",
-    # "vungtau_20180423"
+    "venice_20180928",
+    "vungtau_20180423"
     ]
 
 
@@ -209,7 +209,7 @@ def get_transform(mode, intensity=0, add_fdi_ndvi=False):
 
 class FloatingSeaObjectRegionDataset(torch.utils.data.Dataset):
     def __init__(self, root, region, output_size=64,
-                 transform=None, hard_negative_mining=False,
+                 channels=12, hard_negative_mining=False,
                  use_l2a_probability=0.5):
 
         shapefile = os.path.join(root, region + ".shp")
@@ -226,7 +226,7 @@ class FloatingSeaObjectRegionDataset(torch.utils.data.Dataset):
             self.lines = []
             return  # break early out of this function
 
-        self.transform = get_transform("train", intensity=0, add_fdi_ndvi=True)
+        self.transform = get_transform("train", intensity=0, add_fdi_ndvi=(channels == 14))
         self.region = region
 
         self.imagefile = imagefile
@@ -347,10 +347,6 @@ class FloatingSeaObjectRegionDataset(torch.utils.data.Dataset):
 
         mask = mask.astype(float)
         image = image.astype(float)
-
-        image *= 1e-4
-        image = torch.Tensor(image)
-        mask = torch.Tensor(np.expand_dims(mask, axis=0))
 
         if self.transform is not None:
             image, mask = self.transform(image, mask)

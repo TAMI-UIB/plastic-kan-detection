@@ -53,5 +53,6 @@ def train(cfg: DictConfig):
     trainer.test(experiment, dataloaders=dataloaders)
     exit(0)
 
+
 if __name__ == '__main__':
     train()
