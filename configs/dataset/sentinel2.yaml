@@ -7,7 +7,7 @@ train:
     root: ${oc.env:DATASET_PATH}/${dataset.name}
     fold: train
     seed: 42
-    output_size: 32
+    output_size: 64
   batch_size: ${model.train.batch_size}
   num_workers: ${model.train.num_workers}
   shuffle: True
@@ -18,7 +18,7 @@ validation:
     root: ${oc.env:DATASET_PATH}/${dataset.name}
     fold: validation
     seed: 42
-    output_size: 32
+    output_size: 64
   batch_size: ${model.train.batch_size}
   num_workers: ${model.train.num_workers}
   shuffle: False
@@ -29,7 +29,7 @@ test:
     root: ${oc.env:DATASET_PATH}/${dataset.name}
     fold: test
     seed: 42
-    output_size: 32
+    output_size: 64
   batch_size: ${model.train.batch_size}
   num_workers: ${model.train.num_workers}
   shuffle: False
