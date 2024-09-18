@@ -134,10 +134,6 @@ class ImagePlotCallback(pl.Callback):
     def on_validation_epoch_end(self, trainer, pl_module):
         # Verificar si la época actual es múltiplo de plot_interval
         if trainer.current_epoch % self.plot_interval == 0:
-            # Almacena las GT y predicciones
-            gt_list = []
-            pred_list = []
-            list_of_list_ms = []
 
             # Establece el modo de evaluación
             pl_module.eval()

@@ -220,7 +220,9 @@ class FloatingSeaObjectRegionDataset(torch.utils.data.Dataset):
         mask = mask.astype(float)
         image = image.astype(float)
 
-        # image = np.nan_to_num(image)
+        image *= 1e-4
+        image = torch.Tensor(image)
+        mask = torch.Tensor(np.expand_dims(mask, axis=0))
 
         if self.transform is not None:
             image, mask = self.transform(image, mask)
@@ -228,12 +230,12 @@ class FloatingSeaObjectRegionDataset(torch.utils.data.Dataset):
         assert not np.isnan(image).any()
         assert not np.isnan(mask).any()
 
-        return image, mask
+        return image, mask, index
 
 
 class sentinel2(torch.utils.data.ConcatDataset):
     def __init__(self, root, fold="train", seed=0, **kwargs):
-        assert fold in ["train", "val", "test"]
+        assert fold in ["train", "validation", "test"]
 
         # make regions variable available to the outside
         self.regions = get_region_split(seed)[fold]
