@@ -22,7 +22,12 @@ def test(cfg: DictConfig):
 
     print(OmegaConf.to_yaml(cfg))
     experiment = Experiment(cfg)
+    train_loader = instantiate(cfg.dataset.train)
     validation_loader = instantiate(cfg.dataset.validation)
+    test_loader = instantiate(cfg.dataset.test)
+    print(len(train_loader))
+    print(len(validation_loader))
+    print(len(test_loader))
 
     tb_log_dir = f'{os.environ["LOG_DIR"]}/{cfg.dataset.name}/x{cfg.sampling}/{cfg.day}/{cfg.model.name}/'
     logger = TensorBoardLogger(tb_log_dir, name=cfg.nickname)
