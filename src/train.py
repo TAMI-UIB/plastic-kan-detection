@@ -32,7 +32,7 @@ def train(cfg: DictConfig):
     default_callbacks = [
                          MetricLogger(day=cfg.day, name=cfg.model.name, path_dir=csv_log_path),
                          ImagePlotCallback(plot_interval=cfg.plot_interval),
-                         EvaluationMetricLogger(day=cfg.day, name=cfg.model.name, path=csv_log_path),
+                         # EvaluationMetricLogger(day=cfg.day, name=cfg.model.name, path=csv_log_path),
                          RichModelSummary(max_depth=3),
                          instantiate(cfg.checkpoint),
                          ]
@@ -44,14 +44,14 @@ def train(cfg: DictConfig):
 
     trainer.fit(experiment, train_loader, validation_loader)
 
-    ckpt = torch.load(f"{trainer.log_dir}/checkpoints/best.ckpt")
-    weights = ckpt['state_dict']
-    experiment.load_state_dict(weights)
-    test_loader = instantiate(cfg.dataset.test) if hasattr(cfg.dataset, 'test') else None
-    dataloaders = {"validation": validation_loader} if test_loader is None else {"validation": validation_loader,
-                                                                                 "test": test_loader}
-    trainer.test(experiment, dataloaders=dataloaders)
-    exit(0)
+    # ckpt = torch.load(f"{trainer.log_dir}/checkpoints/best.ckpt")
+    # weights = ckpt['state_dict']
+    # experiment.load_state_dict(weights)
+    # test_loader = instantiate(cfg.dataset.test) if hasattr(cfg.dataset, 'test') else None
+    # dataloaders = {"validation": validation_loader} if test_loader is None else {"validation": validation_loader,
+    #                                                                              "test": test_loader}
+    # trainer.test(experiment, dataloaders=dataloaders)
+    # exit(0)
 
 
 if __name__ == '__main__':

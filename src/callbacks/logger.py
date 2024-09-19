@@ -22,14 +22,14 @@ class EvaluationMetricLogger(Callback):
         for i, subset in enumerate(subset):
             if os.path.exists(filename[i]):
                 # download_drive(filename[i], pl_module.cfg.dataset.name)
-                csv_logger=pd.read_csv(filename[i])
+                csv_logger = pd.read_csv(filename[i])
             else:
                 os.makedirs(f'{self.path}/evaluation-report/') if not os.path.exists(f'{self.path}/evaluation-report/') else None
                 # download_drive(filename[i], pl_module.cfg.dataset.name)
                 csv_logger = pd.read_csv(filename[i])
             metrics = pl_module.eval_metrics[subset].get_statistics()
             data = {"day": [str(self.day)], "model": [self.name],
-                           **{key: [value] for key, value in metrics['mean'].items()}}
+                    **{key: [value] for key, value in metrics['mean'].items()}}
             new_data = pd.DataFrame(data)
             csv_logger = pd.concat([csv_logger, new_data])
             csv_logger.to_csv(filename[i], index=False)
@@ -82,21 +82,21 @@ class MetricLogger(Callback):
             self.best_metrics['train'] = pl_module.fit_metrics['train'].get_statistics()['mean']
             writer.add_text("best_metrics", str(statistics['mean']), global_step=epoch)
 
-    def on_fit_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
-        file_name = {k: f'{self.path_dir}/experiment-report/{k}_sampling_{pl_module.cfg.sampling}.csv' for k in pl_module.fit_subsets}
-        for subset in pl_module.fit_subsets:
-            # download_drive(file_name[subset], pl_module.cfg.dataset.name)
-            csv_logger = pd.read_csv(file_name[subset]) if os.path.exists(file_name[subset]) else pd.DataFrame()
-            data = {"day": [str(self.day)],
-                    "model": [self.name],
-                    "nickname": [f'=HYPERLINK("{trainer.logger.log_dir}"; "{pl_module.cfg.nickname}")'],
-                    "parameters": pl_module.num_params,
-                    **{key: [value] for key, value in self.best_metrics[subset].items()}}
-            new_data = pd.DataFrame(data)
-            csv_logger = pd.concat([csv_logger, new_data])
-            csv_logger.to_csv(file_name[subset], index=False)
-        # if os.environ['UPLOAD_FILES'] == 'True':
-        #     upload_drive(file_name['validation'], pl_module.cfg.dataset.name)
+    # def on_fit_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
+    #     file_name = {k: f'{self.path_dir}/experiment-report/{k}_sampling_{pl_module.cfg.sampling}.csv' for k in pl_module.fit_subsets}
+    #     for subset in pl_module.fit_subsets:
+    #         # download_drive(file_name[subset], pl_module.cfg.dataset.name)
+    #         csv_logger = pd.read_csv(file_name[subset]) if os.path.exists(file_name[subset]) else pd.DataFrame()
+    #         data = {"day": [str(self.day)],
+    #                 "model": [self.name],
+    #                 "nickname": [f'=HYPERLINK("{trainer.logger.log_dir}"; "{pl_module.cfg.nickname}")'],
+    #                 "parameters": pl_module.num_params,
+    #                 **{key: [value] for key, value in self.best_metrics[subset].items()}}
+    #         new_data = pd.DataFrame(data)
+    #         csv_logger = pd.concat([csv_logger, new_data])
+    #         csv_logger.to_csv(file_name[subset], index=False)
+    #     # if os.environ['UPLOAD_FILES'] == 'True':
+    #     #     upload_drive(file_name['validation'], pl_module.cfg.dataset.name)
 
 bands = ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B8A", "B9", "B11", "B12"]
 def calculate_fdi(scene):
