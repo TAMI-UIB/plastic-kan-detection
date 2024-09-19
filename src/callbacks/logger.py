@@ -9,23 +9,21 @@ from pytorch_lightning.callbacks import Callback
 from skimage.exposure import equalize_hist
 
 
-class EvaluationMetricLogger(Callback):
+class TestMetricLogger(Callback):
     def __init__(self, day, name, path) -> None:
-        super(EvaluationMetricLogger, self).__init__()
+        super(TestMetricLogger, self).__init__()
         self.name = name
         self.path = path
         self.day = day
 
     def on_test_epoch_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
-        filename = [f'{self.path}/evaluation-report/{k}_sampling_{pl_module.cfg.sampling}.csv' for k in trainer.test_dataloaders.keys()]
+        filename = [f'{self.path}/test-report/{k}_sampling_{pl_module.cfg.sampling}.csv' for k in trainer.test_dataloaders.keys()]
         subset = trainer.test_dataloaders.keys()
         for i, subset in enumerate(subset):
             if os.path.exists(filename[i]):
-                # download_drive(filename[i], pl_module.cfg.dataset.name)
                 csv_logger = pd.read_csv(filename[i])
             else:
-                os.makedirs(f'{self.path}/evaluation-report/') if not os.path.exists(f'{self.path}/evaluation-report/') else None
-                # download_drive(filename[i], pl_module.cfg.dataset.name)
+                os.makedirs(f'{self.path}/test-report/') if not os.path.exists(f'{self.path}/test-report/') else None
                 csv_logger = pd.read_csv(filename[i])
             metrics = pl_module.eval_metrics[subset].get_statistics()
             data = {"day": [str(self.day)], "model": [self.name],
@@ -33,8 +31,6 @@ class EvaluationMetricLogger(Callback):
             new_data = pd.DataFrame(data)
             csv_logger = pd.concat([csv_logger, new_data])
             csv_logger.to_csv(filename[i], index=False)
-        # if os.environ['UPLOAD_FILES']=='True' and len(filename)>1:
-        #     upload_drive(filename[1], pl_module.cfg.dataset.name)
 
 
 class MetricLogger(Callback):

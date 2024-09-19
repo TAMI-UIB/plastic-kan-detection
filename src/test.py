@@ -18,11 +18,9 @@ from hydra.utils import instantiate
 
 
 @hydra.main(config_path="../configs", config_name="config", version_base="1.3")
-def train(cfg: DictConfig):
+def test(cfg: DictConfig):
 
     print(OmegaConf.to_yaml(cfg))
-    train_loader = instantiate(cfg.dataset.train)
-    validation_loader = instantiate(cfg.dataset.validation)
     experiment = Experiment(cfg)
 
     tb_log_dir = f'{os.environ["LOG_DIR"]}/{cfg.dataset.name}/x{cfg.sampling}/{cfg.day}/{cfg.model.name}/'
@@ -38,13 +36,10 @@ def train(cfg: DictConfig):
                          ]
 
     callback_list = instantiate(cfg.model.callbacks) + default_callbacks if hasattr(cfg.model, 'callbacks') else default_callbacks
-    trainer = Trainer(max_epochs=cfg.model.train.max_epochs, logger=logger,
-                      devices=cfg.devices,
+    trainer = Trainer(max_epochs=cfg.model.train.max_epochs, logger=logger, devices=cfg.devices,
                       callbacks=callback_list, accelerator="auto")
 
-    trainer.fit(experiment, train_loader, validation_loader)
-
-    ckpt = torch.load(f"{trainer.log_dir}/checkpoints/best.ckpt")
+    ckpt = torch.load(f"{tb_log_dir}/default/version_{cfg.version}/checkpoints/best.ckpt")
     weights = ckpt['state_dict']
     experiment.load_state_dict(weights)
     test_loader = instantiate(cfg.dataset.test) if hasattr(cfg.dataset, 'test') else None
@@ -55,4 +50,4 @@ def train(cfg: DictConfig):
 
 
 if __name__ == '__main__':
-    train()
+    test()
