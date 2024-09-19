@@ -22,6 +22,7 @@ def test(cfg: DictConfig):
 
     print(OmegaConf.to_yaml(cfg))
     experiment = Experiment(cfg)
+    validation_loader = instantiate(cfg.dataset.validation)
 
     tb_log_dir = f'{os.environ["LOG_DIR"]}/{cfg.dataset.name}/x{cfg.sampling}/{cfg.day}/{cfg.model.name}/'
     logger = TensorBoardLogger(tb_log_dir, name=cfg.nickname)
@@ -43,9 +44,9 @@ def test(cfg: DictConfig):
     weights = ckpt['state_dict']
     experiment.load_state_dict(weights)
     test_loader = instantiate(cfg.dataset.test) if hasattr(cfg.dataset, 'test') else None
+    dataloaders = {"validation": validation_loader, "test": test_loader}
 
-    if test_loader:
-        trainer.test(experiment, dataloaders=test_loader)
+    trainer.test(experiment, dataloaders=dataloaders)
     exit(0)
 
 

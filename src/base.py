@@ -8,7 +8,7 @@ from torchvision.utils import save_image
 
 pl.seed_everything(42)
 class Experiment(pl.LightningModule):
-    def __init__(self,cfg: DictConfig):
+    def __init__(self, cfg: DictConfig):
         super(Experiment, self).__init__()
         # Experiment configuration
         self.cfg = cfg
@@ -25,7 +25,7 @@ class Experiment(pl.LightningModule):
         self.eval_metrics = {k: instantiate(cfg.metrics) for k in self.eval_subsets}
         # Loss report
         self.fit_loss = {subset: 0 for subset in self.fit_subsets}
-        self.fit_loss_components = { subset: {k: 0 for k in self.loss_criterion.components()} for subset in self.fit_subsets}
+        self.fit_loss_components = {subset: {k: 0 for k in self.loss_criterion.components()} for subset in self.fit_subsets}
 
     def forward(self, low):
         return self.model(low)
@@ -72,4 +72,3 @@ class Experiment(pl.LightningModule):
             save_image(low[i], f'{img_path}{name[i].split("_")[-1]}_low.png')
             save_image(gt[i], f'{img_path}{name[i].split("_")[-1]}_gt.png')
             save_image(pred[i], f'{img_path}{name[i].split("_")[-1]}_{self.cfg.model.name}.png')
-

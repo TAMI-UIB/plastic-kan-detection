@@ -47,10 +47,9 @@ def train(cfg: DictConfig):
     ckpt = torch.load(f"{trainer.log_dir}/checkpoints/best.ckpt")
     weights = ckpt['state_dict']
     experiment.load_state_dict(weights)
-    test_loader = instantiate(cfg.dataset.test) if hasattr(cfg.dataset, 'test') else None
+    test_loader = instantiate(cfg.dataset.test)
 
-    if test_loader:
-        trainer.test(experiment, dataloaders=test_loader)
+    trainer.test(experiment, dataloaders=test_loader)
     exit(0)
 
 

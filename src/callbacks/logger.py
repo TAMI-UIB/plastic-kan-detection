@@ -17,20 +17,19 @@ class TestMetricLogger(Callback):
         self.day = day
 
     def on_test_epoch_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
-        filename = [f'{self.path}/test-report/{k}_sampling_{pl_module.cfg.sampling}.csv' for k in trainer.test_dataloaders.keys()]
-        subset = trainer.test_dataloaders.keys()
-        for i, subset in enumerate(subset):
-            if os.path.exists(filename[i]):
-                csv_logger = pd.read_csv(filename[i])
-            else:
-                os.makedirs(f'{self.path}/test-report/') if not os.path.exists(f'{self.path}/test-report/') else None
-                csv_logger = pd.read_csv(filename[i])
+        for subset in trainer.test_dataloaders.keys():
+            os.makedirs(f'{self.path}/{subset}-report/', exist_ok=True)
+            filename = f'{self.path}/{subset}-report/metrics.csv'
+            try:
+                csv_logger = pd.read_csv(filename)
+            except FileNotFoundError:
+                csv_logger = pd.DataFrame()
             metrics = pl_module.eval_metrics[subset].get_statistics()
             data = {"day": [str(self.day)], "model": [self.name],
                     **{key: [value] for key, value in metrics['mean'].items()}}
             new_data = pd.DataFrame(data)
             csv_logger = pd.concat([csv_logger, new_data])
-            csv_logger.to_csv(filename[i], index=False)
+            csv_logger.to_csv(filename, index=False)
 
 
 class MetricLogger(Callback):
