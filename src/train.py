@@ -48,8 +48,9 @@ def train(cfg: DictConfig):
     weights = ckpt['state_dict']
     experiment.load_state_dict(weights)
     test_loader = instantiate(cfg.dataset.test)
+    dataloaders = {"validation": validation_loader, "test": test_loader}
 
-    trainer.test(experiment, dataloaders=test_loader)
+    trainer.test(experiment, dataloaders=dataloaders)
     exit(0)
 
 
