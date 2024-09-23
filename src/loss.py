@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
+from functorch.einops import rearrange
 
 
 class FocalLoss(nn.Module):
@@ -57,7 +58,8 @@ class DiceBCELoss(nn.Module):
         intersection = (inputs * targets).sum()
         dice_loss = 1 - (2. * intersection + smooth) / (inputs.sum() + targets.sum() + smooth)
         BCE = F.binary_cross_entropy(inputs, targets, reduction='mean')
-        Dice_BCE = BCE + dice_loss
+
+        Dice_BCE = 0.5 * BCE + 0.5 * torch.mean(dice_loss)
 
         return Dice_BCE, {'dice': dice_loss, 'bce': BCE}
 
