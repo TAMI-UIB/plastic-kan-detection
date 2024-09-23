@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - model: deep_u_net
+  - model: u_kan
   - dataset: sentinel2
 save_image: True
 sampling: 4

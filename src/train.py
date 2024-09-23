@@ -44,7 +44,7 @@ def train(cfg: DictConfig):
 
     trainer.fit(experiment, train_loader, validation_loader)
 
-    ckpt = torch.load(f"{trainer.log_dir}/checkpoints/best.ckpt")
+    ckpt = torch.load(f"{trainer.log_dir}/checkpoints/last.ckpt")
     weights = ckpt['state_dict']
     experiment.load_state_dict(weights)
     test_loader = instantiate(cfg.dataset.test)
