@@ -14,7 +14,7 @@ class Experiment(pl.LightningModule):
         self.cfg = cfg
         # Define subsets
         self.fit_subsets = ['train', 'validation']
-        self.eval_subsets = ['validation', 'test'] if hasattr(cfg.dataset, 'test') else ['validation']
+        self.eval_subsets = ['validation', 'test', 'train']
         # Define model and loss
         self.model = instantiate(cfg.model.module)
         self.loss_criterion = instantiate(cfg.model.loss)
