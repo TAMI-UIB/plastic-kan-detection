@@ -42,7 +42,7 @@ class MetricLogger(Callback):
         self.path_dir = path_dir
         self.day = day
         self.name = name
-        self.best_iou = -99999
+        self.best_metric = -99999
 
         os.makedirs(f'{path_dir}/experiment-report/') if not os.path.exists(f'{path_dir}/experiment-report/') else None
 
@@ -71,8 +71,8 @@ class MetricLogger(Callback):
                 writer.add_scalar(f"{k}/{subset}", v, epoch)
             writer.add_scalars(f"loss/{subset}_components", pl_module.fit_loss_components[subset], epoch)
             writer.add_scalar(f"loss/{subset}", pl_module.fit_loss[subset], epoch)
-        if subset == "validation" and statistics['mean']['iou'] > self.best_iou:
-            self.best_iou = statistics['mean']['iou']
+        if subset == "validation" and statistics['mean'][metric] > self.best_metric:
+            self.best_metric = statistics['mean'][metric]
             self.best_metrics['validation'] = statistics['mean']
             self.best_metrics['train'] = pl_module.fit_metrics['train'].get_statistics()['mean']
             writer.add_text("best_metrics", str(statistics['mean']), global_step=epoch)

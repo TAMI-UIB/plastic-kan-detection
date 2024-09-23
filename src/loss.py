@@ -40,15 +40,19 @@ class DiceBCELoss(nn.Module):
         super(DiceBCELoss, self).__init__()
 
     def components(self):
-        return []
+        return ['dice', 'bce']
 
     def forward(self, inputs, targets, smooth=1):
         # comment out if your model contains a sigmoid or equivalent activation layer
         inputs = torch.sigmoid(inputs)
-
+        print(inputs.size())
         # flatten label and prediction tensors
-        inputs = inputs.view(-1)
-        targets = targets.view(-1)
+        # inputs = inputs.view(-1)
+        # targets = targets.view(-1)
+        inputs = rearrange(inputs, 'b c h w -> b (h w c)')
+        targets = rearrange(targets, 'b c h w -> b (h w c)')
+
+        print(inputs.size())
 
         intersection = (inputs * targets).sum()
         dice_loss = 1 - (2. * intersection + smooth) / (inputs.sum() + targets.sum() + smooth)
