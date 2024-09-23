@@ -1,0 +1,26 @@
+name: MeanNet
+goal: mean_net
+shared: False
+module:
+  _target_: model.mean_net.MeanNet
+  _recursive_: False
+  hidden_channels: 64
+train:
+  batch_size: 100
+  num_workers: 16
+  max_epochs: 40
+loss:
+  _target_: loss.DiceBCELoss
+
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 1.e-4
+  betas:
+    - 0.9
+    - 0.999
+  eps: 1.e-8
+scheduler:
+  _target_: torch.optim.lr_scheduler.MultiStepLR
+  milestones:
+    - 1000
+  gamma: 1

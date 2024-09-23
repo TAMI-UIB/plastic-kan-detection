@@ -103,19 +103,17 @@ class UNet(nn.Module):
         self.ReLU = nn.ReLU()
         self.sigmoid = nn.Sigmoid()
 
-    # def forward(self, x):
-    #     x1 = self.doble_conv(x)
-    #     x2 = self.Encoder1(x1)
-    #     x3 = self.Encoder2(x2)
-    #     x4 = self.Encoder3(x3)
-    #     x = self.Encoder4(x4)
-    #
-    #     x = self.Decoder1(x, x4)
-    #     x = self.Decoder2(x, x3)
-    #     x = self.Decoder3(x, x2)
-    #     x = self.Decoder4(x, x1)
-    #     x = self.out(x)
-    #
-    #     return x
     def forward(self, x):
-       return torch.mean(x[:, -2:, :, :], keepdim=True)
+        x1 = self.doble_conv(x)
+        x2 = self.Encoder1(x1)
+        x3 = self.Encoder2(x2)
+        x4 = self.Encoder3(x3)
+        x = self.Encoder4(x4)
+
+        x = self.Decoder1(x, x4)
+        x = self.Decoder2(x, x3)
+        x = self.Decoder3(x, x2)
+        x = self.Decoder4(x, x1)
+        x = self.out(x)
+
+        return x
