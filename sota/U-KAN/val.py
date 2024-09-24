@@ -5,7 +5,6 @@ from glob import glob
 import random
 import numpy as np
 
-import cv2
 import torch
 import torch.backends.cudnn as cudnn
 import yaml
@@ -13,15 +12,13 @@ from albumentations.augmentations import transforms
 from albumentations.core.composition import Compose
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
-from collections import OrderedDict
 
 import archs
 
 from dataset import Dataset
 from metrics import iou_score
 from utils import AverageMeter
-from albumentations import RandomRotate90,Resize
-import time
+from albumentations import Resize
 
 from PIL import Image
 

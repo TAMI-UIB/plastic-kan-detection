@@ -1,5 +1,4 @@
 import argparse
-import os
 from collections import OrderedDict
 from glob import glob
 import random
@@ -15,7 +14,7 @@ import yaml
 from albumentations.augmentations import transforms
 from albumentations.augmentations import geometric
 
-from albumentations.core.composition import Compose, OneOf
+from albumentations.core.composition import Compose
 from sklearn.model_selection import train_test_split
 from torch.optim import lr_scheduler
 from tqdm import tqdm
@@ -34,10 +33,6 @@ from tensorboardX import SummaryWriter
 
 import shutil
 import os
-import subprocess
-
-from pdb import set_trace as st
-
 
 ARCH_NAMES = archs.__all__
 LOSS_NAMES = losses.__all__
