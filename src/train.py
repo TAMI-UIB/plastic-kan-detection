@@ -1,7 +1,6 @@
 import os
 
 import hydra
-import torch
 from dotenv import load_dotenv
 from omegaconf import DictConfig, OmegaConf
 from pytorch_lightning import Trainer
@@ -12,7 +11,7 @@ os.environ["PROJECT_ROOT"] = os.path.dirname(os.path.dirname(os.path.abspath(__f
 
 load_dotenv(os.path.join(os.environ["PROJECT_ROOT"], ".env"))
 
-from callbacks.logger import MetricLogger, ImagePlotCallback, TestMetricLogger
+from callbacks.logger import TBoardLogger, ImagePlotCallback, GDriveLogger
 from base import Experiment
 from hydra.utils import instantiate
 
@@ -30,9 +29,9 @@ def train(cfg: DictConfig):
     csv_log_path = f"{os.environ['LOG_DIR']}/{cfg.dataset.name}"
 
     default_callbacks = [
-                         MetricLogger(day=cfg.day, name=cfg.model.name, path_dir=csv_log_path),
+                         TBoardLogger(day=cfg.day, name=cfg.model.name),
                          ImagePlotCallback(plot_interval=cfg.plot_interval),
-                         TestMetricLogger(day=cfg.day, name=cfg.model.name, path=csv_log_path),
+                         GDriveLogger(path=csv_log_path),
                          RichModelSummary(max_depth=3),
                          instantiate(cfg.checkpoint),
                          ]
@@ -44,15 +43,14 @@ def train(cfg: DictConfig):
 
     trainer.fit(experiment, train_loader, validation_loader)
 
-    ckpt = torch.load(f"{trainer.log_dir}/checkpoints/last.ckpt")
-    weights = ckpt['state_dict']
-    experiment.load_state_dict(weights)
+    # ckpt = torch.load(f"{trainer.log_dir}/checkpoints/last.ckpt")
+    # weights = ckpt['state_dict']
+    # experiment.load_state_dict(weights)
     test_loader = instantiate(cfg.dataset.test)
-    dataloaders = {"validation": validation_loader, "test": test_loader}
+    dataloaders = {"train": train_loader, "validation": validation_loader, "test": test_loader}
 
     trainer.test(experiment, dataloaders=dataloaders)
     exit(0)
-
 
 if __name__ == '__main__':
     train()

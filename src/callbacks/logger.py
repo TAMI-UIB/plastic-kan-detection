@@ -8,6 +8,8 @@ from matplotlib import pyplot as plt
 from pytorch_lightning.callbacks import Callback
 from skimage.exposure import equalize_hist
 
+from src.callbacks.upload_drive import download_drive, upload_drive
+
 
 class TestMetricLogger(Callback):
     def __init__(self, day, name, path) -> None:
@@ -18,10 +20,10 @@ class TestMetricLogger(Callback):
 
     def on_test_epoch_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
         for subset in trainer.test_dataloaders.keys():
-            os.makedirs(f'{self.path}/{subset}-report/', exist_ok=True)
-            filename = f'{self.path}/{subset}-report/metrics.csv'
+            os.makedirs(f'{self.path}/reports/', exist_ok=True)
+            file_name = f'{self.path}/reports/{subset}.csv'
             try:
-                csv_logger = pd.read_csv(filename)
+                csv_logger = pd.read_csv(file_name)
             except FileNotFoundError:
                 csv_logger = pd.DataFrame()
             metrics = pl_module.eval_metrics[subset].get_statistics()
@@ -29,36 +31,31 @@ class TestMetricLogger(Callback):
                     **{key: [value] for key, value in metrics['mean'].items()}}
             new_data = pd.DataFrame(data)
             csv_logger = pd.concat([csv_logger, new_data])
-            csv_logger.to_csv(filename, index=False)
+            csv_logger.to_csv(file_name, index=False)
 
 
-class MetricLogger(Callback):
-    def __init__(self, day, name, path_dir) -> None:
-        super(MetricLogger, self).__init__()
+class TBoardLogger(Callback):
+    def __init__(self, day, name) -> None:
+        super(TBoardLogger, self).__init__()
         fit_subsets = ['train', 'validation']
-
         self.best_metrics = {k: {} for k in fit_subsets}
-
-        self.path_dir = path_dir
         self.day = day
         self.name = name
         self.best_metric = -99999
 
-        os.makedirs(f'{path_dir}/experiment-report/') if not os.path.exists(f'{path_dir}/experiment-report/') else None
-
     def on_train_epoch_start(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
         for subset in pl_module.fit_subsets:
-            pl_module.fit_metrics[subset].clean()
-            pl_module.fit_loss[subset] = 0
-            for k, v in pl_module.fit_loss_components[subset].items():
-                pl_module.fit_loss_components[subset][k] = 0
+            pl_module.metrics[subset].clean()
+            pl_module.loss[subset] = 0
+            for k, v in pl_module.loss_components[subset].items():
+                pl_module.loss_components[subset][k] = 0
 
     def on_validation_epoch_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
         logger = trainer.logger
         writer = logger.experiment
         epoch = trainer.current_epoch
-        writer.add_scalars(f"loss/comparison", {k: v for k, v in pl_module.fit_loss.items()}, epoch)
-        all_statistics = {k: v.get_statistics() for k, v in pl_module.fit_metrics.items()}
+        writer.add_scalars(f"loss/comparison", {k: v for k, v in pl_module.loss.items() }, epoch)
+        all_statistics = {k: v.get_statistics() for k, v in pl_module.metrics.items() if k in pl_module.fit_subsets}
         # Log the reference metric for saving checkpoints
         stage = pl_module.cfg.checkpoint.monitor.split('_')[0]
         metric = pl_module.cfg.checkpoint.monitor.split('_')[-1]
@@ -69,29 +66,42 @@ class MetricLogger(Callback):
             statistics = all_statistics[subset]
             for k, v in statistics['mean'].items():
                 writer.add_scalar(f"{k}/{subset}", v, epoch)
-            writer.add_scalars(f"loss/{subset}_components", pl_module.fit_loss_components[subset], epoch)
-            writer.add_scalar(f"loss/{subset}", pl_module.fit_loss[subset], epoch)
-        if subset == "validation" and statistics['mean'][metric] > self.best_metric:
-            self.best_metric = statistics['mean'][metric]
-            self.best_metrics['validation'] = statistics['mean']
-            self.best_metrics['train'] = pl_module.fit_metrics['train'].get_statistics()['mean']
-            writer.add_text("best_metrics", str(statistics['mean']), global_step=epoch)
+            writer.add_scalars(f"loss/{subset}_components", pl_module.loss_components[subset], epoch)
+            writer.add_scalar(f"loss/{subset}", pl_module.loss[subset], epoch)
+            if subset == "validation" and statistics['mean'][metric] > self.best_metric: # TODO: Reformulate this to do it dynamical based on pl_module.cfg.checkpoint.mode
+                self.best_metric = statistics['mean'][metric]
+                self.best_metrics['validation'] = statistics['mean']
+                writer.add_text("best_metrics", str(statistics['mean']), global_step=epoch)
 
-    # def on_fit_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
-    #     file_name = {k: f'{self.path_dir}/experiment-report/{k}_sampling_{pl_module.cfg.sampling}.csv' for k in pl_module.fit_subsets}
-    #     for subset in pl_module.fit_subsets:
-    #         # download_drive(file_name[subset], pl_module.cfg.dataset.name)
-    #         csv_logger = pd.read_csv(file_name[subset]) if os.path.exists(file_name[subset]) else pd.DataFrame()
-    #         data = {"day": [str(self.day)],
-    #                 "model": [self.name],
-    #                 "nickname": [f'=HYPERLINK("{trainer.logger.log_dir}"; "{pl_module.cfg.nickname}")'],
-    #                 "parameters": pl_module.num_params,
-    #                 **{key: [value] for key, value in self.best_metrics[subset].items()}}
-    #         new_data = pd.DataFrame(data)
-    #         csv_logger = pd.concat([csv_logger, new_data])
-    #         csv_logger.to_csv(file_name[subset], index=False)
-    #     # if os.environ['UPLOAD_FILES'] == 'True':
-    #     #     upload_drive(file_name['validation'], pl_module.cfg.dataset.name)
+
+class GDriveLogger(Callback):
+    def __init__(self, path) -> None:
+        super().__init__()
+        self.path_dir = path
+
+    def on_test_start(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
+        for subset in pl_module.subsets:
+            pl_module.metrics[subset].clean()
+
+    def on_test_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
+        metrics = pl_module.metrics
+        subsets = pl_module.subsets
+        for subset in subsets:
+            os.makedirs(f'{self.path}/reports/', exist_ok=True)
+            file_name = f'{self.path_dir}/reports/{subset}.csv'
+            download_drive(self.path_dir, subset,  pl_module.cfg.dataset.name)
+            csv_logger = pd.read_csv(file_name) if os.path.exists(file_name) else pd.DataFrame()
+            data = {"day": [str(self.day)],
+                    "model": [self.name],
+                    "nickname": [pl_module.cfg.nickname],
+                    "parameters": [pl_module.num_params],
+                    **{key: [value] for key, value in metrics[subset].items()}, "log_path": [trainer.log_dir]}
+            new_data = pd.DataFrame(data)
+            csv_logger = pd.concat([csv_logger, new_data])
+            csv_logger.to_csv(file_name, index=False)
+            if os.environ['UPLOAD_FILES'] == 'True':
+                upload_drive(file_name, pl_module.cfg.dataset.name)
+
 
 bands = ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B8A", "B9", "B11", "B12"]
 def calculate_fdi(scene):

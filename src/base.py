@@ -13,19 +13,18 @@ class Experiment(pl.LightningModule):
         # Experiment configuration
         self.cfg = cfg
         # Define subsets
+        self.subsets = ['train', 'validation', 'test']
         self.fit_subsets = ['train', 'validation']
-        self.eval_subsets = ['validation', 'test', 'train']
         # Define model and loss
         self.model = instantiate(cfg.model.module)
         self.loss_criterion = instantiate(cfg.model.loss)
         # Number of model parameters
         self.num_params = sum(p.numel() for p in self.parameters() if p.requires_grad)
         # Metric calculator
-        self.fit_metrics = {k: instantiate(cfg.metrics) for k in self.fit_subsets}
-        self.eval_metrics = {k: instantiate(cfg.metrics) for k in self.eval_subsets}
+        self.metrics = {k: instantiate(cfg.metrics) for k in self.subsets}
         # Loss report
-        self.fit_loss = {subset: 0 for subset in self.fit_subsets}
-        self.fit_loss_components = {subset: {k: 0 for k in self.loss_criterion.components()} for subset in self.fit_subsets}
+        self.loss = {subset: 0 for subset in self.fit_subsets}
+        self.loss_components = {subset: {k: 0 for k in self.loss_criterion.components()} for subset in self.fit_subsets}
 
     def forward(self, low):
         return self.model(low)
@@ -34,7 +33,7 @@ class Experiment(pl.LightningModule):
         low, gt, name = input
         output = self.forward(low)
         loss, loss_dict = self.loss_criterion(output, gt)
-        self.fit_metrics['train'].update(inputs=output, targets=gt)
+        self.metrics['train'].update(inputs=output, targets=gt)
         self.loss_report(loss, loss_dict, 'train')
         return loss
 
@@ -42,14 +41,14 @@ class Experiment(pl.LightningModule):
         low, gt, name = input
         output = self.forward(low)
         loss, loss_dict = self.loss_criterion(output, gt)
-        self.fit_metrics['validation'].update(inputs=output, targets=gt)
-        self.loss_report(loss, loss_dict,'validation')
+        self.metrics['validation'].update(inputs=output, targets=gt)
+        self.loss_report(loss, loss_dict, 'validation')
         return loss
 
     def test_step(self, batch, batch_idx, dataloader_idx=0):
         low, gt, name = batch
         output = self.forward(low)
-        self.eval_metrics[self.eval_subsets[dataloader_idx]].update(inputs=output, targets=gt)
+        self.metrics['test'].update(inputs=output, targets=gt)
 
     def configure_optimizers(self):
         optimizer = instantiate(self.cfg.model.optimizer,params=self.parameters())
@@ -62,8 +61,9 @@ class Experiment(pl.LightningModule):
 
     def loss_report(self, loss, loss_dict, subset):
         self.fit_loss[subset] += loss
-        for k, v in self.fit_loss_components[subset].items():
-            self.fit_loss_components[subset][k] += loss_dict[k]
+        for subset in self.subset:
+            for k, v in self.loss_components[subset].items():
+                self.loss_components[subset][k] += loss_dict[k]
 
     def save_image(self, low, gt, name, pred, subset):
         img_path = f'{self.logger.log_dir}/images/{subset}/'
