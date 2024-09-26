@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - model: mean_net
+  - model: deep_u_net
   - dataset: sentinel2
 save_image: True
 sampling: 4
@@ -11,7 +11,7 @@ hydra:
 # Otros parámetros globales
 seed: 42
 devices:
-  - 0
+  - 1
 day: ${now:%Y-%m-%d}
 metrics:
   _target_: utils.metrics.MetricCalculator

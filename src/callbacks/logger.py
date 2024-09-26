@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 from pytorch_lightning.callbacks import Callback
 from skimage.exposure import equalize_hist
 
-from src.callbacks.upload_drive import download_drive, upload_drive
+from .upload_drive import download_drive, upload_drive
 
 
 class TestMetricLogger(Callback):
@@ -77,7 +77,7 @@ class TBoardLogger(Callback):
 class GDriveLogger(Callback):
     def __init__(self, path) -> None:
         super().__init__()
-        self.path_dir = path
+        self.path = path
 
     def on_test_start(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
         for subset in pl_module.subsets:
@@ -88,8 +88,8 @@ class GDriveLogger(Callback):
         subsets = pl_module.subsets
         for subset in subsets:
             os.makedirs(f'{self.path}/reports/', exist_ok=True)
-            file_name = f'{self.path_dir}/reports/{subset}.csv'
-            download_drive(self.path_dir, subset,  pl_module.cfg.dataset.name)
+            file_name = f'{self.path}/reports/{subset}.csv'
+            download_drive(self.path, subset, pl_module.cfg.dataset.name)
             csv_logger = pd.read_csv(file_name) if os.path.exists(file_name) else pd.DataFrame()
             data = {"day": [str(self.day)],
                     "model": [self.name],
