@@ -77,7 +77,7 @@ def download_drive(path_dir, subset, dataset):
         SERVICE_ACCOUNT_FILE, scopes=SCOPES)
     # destination_folder, file_name = '/'.join(file_path.split('/')[:-1]), file_path.split('/')[-1]
     destination_folder = f'{path_dir}/reports/'
-    file_name = subset
+    file_name = subset+'.csv'
     try:
         # Construir el servicio de Google Drive
         drive_service = build('drive', 'v3', credentials=credentials)

@@ -31,7 +31,7 @@ def train(cfg: DictConfig):
     default_callbacks = [
                          TBoardLogger(day=cfg.day, name=cfg.model.name),
                          ImagePlotCallback(plot_interval=cfg.plot_interval),
-                         GDriveLogger(path=csv_log_path),
+                         GDriveLogger(day=cfg.day, name=cfg.model.name, path=csv_log_path),
                          RichModelSummary(max_depth=3),
                          instantiate(cfg.checkpoint),
                          ]
