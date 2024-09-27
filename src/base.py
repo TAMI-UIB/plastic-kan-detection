@@ -60,8 +60,8 @@ class Experiment(pl.LightningModule):
         checkpoint['current_epoch'] = self.current_epoch
 
     def loss_report(self, loss, loss_dict, subset):
-        self.fit_loss[subset] += loss
-        for subset in self.subset:
+        self.loss[subset] += loss
+        for subset in self.fit_subsets:
             for k, v in self.loss_components[subset].items():
                 self.loss_components[subset][k] += loss_dict[k]
 
