@@ -1,7 +1,7 @@
 defaults:
   - _self_
   - model: deep_u_net
-  - dataset: sentinel2
+  - dataset: marinderbis
 save_image: True
 sampling: 4
 hydra:
