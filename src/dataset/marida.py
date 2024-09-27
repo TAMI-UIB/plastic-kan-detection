@@ -119,7 +119,7 @@ KEEP_CLASSES = [1, 7]
 DEBRIS_CLASSES = [1,2,3,4,9]
 
 class MaridaRegionDataset(Dataset):
-     def __init__(self,path,region, imagesize=128, data_transform=None, classification=False):
+     def __init__(self, root, region, imagesize=128, data_transform=None, classification=False):
          self.imagesize = imagesize * 10
          self.data_transform = data_transform
          self.region = region
@@ -127,15 +127,15 @@ class MaridaRegionDataset(Dataset):
 
          tile = region[-5:]
 
-         gdf = gpd.read_file(os.path.join(path, "shapefiles", region + ".shp"))
+         gdf = gpd.read_file(os.path.join(root, "shapefiles", region + ".shp"))
 
          # keep only classes in keep classes
          gdf = gdf.loc[gdf["id"].isin(KEEP_CLASSES)]
 
-         self.maskpath = os.path.join(path, "masks", region + ".tif")
+         self.maskpath = os.path.join(root, "masks", region + ".tif")
          os.makedirs(os.path.dirname(self.maskpath), exist_ok=True)
 
-         mapping = pd.read_csv(os.path.join(path,"marida_mapping.csv"))
+         mapping = pd.read_csv(os.path.join(root, "marida_mapping.csv"))
          m = mapping.loc[mapping.region == region]
 
          # keep only image that matches the tile of the region
@@ -150,7 +150,7 @@ class MaridaRegionDataset(Dataset):
 
          assert len(m) == 1
 
-         self.tifpath = os.path.join(path, "scenes", m.tifpath.iloc[0])
+         self.tifpath = os.path.join(root, "scenes", m.tifpath.iloc[0])
          with rio.open(self.tifpath) as src:
               crs = src.crs
               width = src.width
@@ -200,11 +200,11 @@ class MaridaRegionDataset(Dataset):
           return image, mask, f"marida-{item}"
 
 
-class MaridaDataset(ConcatDataset):
-    def __init__(self, path, fold="train", **kwargs):
-        assert fold in ["train", "val","test"]
+class marida(ConcatDataset):
+    def __init__(self, root, fold="train", **kwargs):
+        assert fold in ["train", "validation","test"]
 
-        with open(os.path.join(path,"splits",f"{fold}_X.txt")) as f:
+        with open(os.path.join(root, "splits", f"{fold}_X.txt")) as f:
             lines = f.readlines()
 
         self.regions = list(set(["S2_" + "_".join(l.replace("\n","").split("_")[:-1]) for l in lines]))
@@ -212,7 +212,7 @@ class MaridaDataset(ConcatDataset):
 
         # initialize a concat dataset with the corresponding regions
         super().__init__(
-            [MaridaRegionDataset(path, region, **kwargs) for region in self.regions]
+            [MaridaRegionDataset(root, region, **kwargs) for region in self.regions]
         )
 
 
@@ -221,13 +221,13 @@ if __name__ == '__main__':
     #ds = MaridaRegionDataset(path="/dataset/marinedebris/MARIDA", region="S2_28-9-20_16PCC")
     #ds[14]
 
-    ds = MaridaDataset(path="/ssd/marinedebris/MARIDA", fold="train")
+    ds = marida(root="/ssd/marinedebris/MARIDA", fold="train")
     print(len(ds))
 
-    ds = MaridaDataset(path="/ssd/marinedebris/MARIDA", fold="val")
+    ds = marida(root="/ssd/marinedebris/MARIDA", fold="val")
     print(len(ds))
 
-    ds = MaridaDataset(path="/ssd/marinedebris/MARIDA", fold="test")
+    ds = marida(root="/ssd/marinedebris/MARIDA", fold="test")
     print(len(ds))
 
     N = 5
