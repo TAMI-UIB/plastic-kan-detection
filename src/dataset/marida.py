@@ -188,19 +188,21 @@ class MaridaRegionDataset(Dataset):
 
           image, mask = pad(image, mask, self.imagesize // 10)
 
-          if self.data_transform is not None:
-              image, mask = self.data_transform(image, mask)
-
+          # if self.data_transform is not None:
+          #     image, mask = self.data_transform(image, mask)
+          image *= 1e-4
+          image = torch.Tensor(image)
+          mask = torch.Tensor(np.expand_dims(mask, axis=0))
           if self.classification:
               mask = torch.tensor(row.id in DEBRIS_CLASSES).long()
 
           return image, mask, f"marida-{item}"
 
 class MaridaDataset(ConcatDataset):
-    def __init__(self, path, fold="train", **kwargs):
-        assert fold in ["train", "val","test"]
+    def __init__(self, root, fold="train", **kwargs):
+        assert fold in ["train", "val", "test"]
 
-        with open(os.path.join(path,"splits",f"{fold}_X.txt")) as f:
+        with open(os.path.join(root, "splits", f"{fold}_X.txt")) as f:
             lines = f.readlines()
 
         self.regions = list(set(["S2_" + "_".join(l.replace("\n","").split("_")[:-1]) for l in lines]))
@@ -208,7 +210,7 @@ class MaridaDataset(ConcatDataset):
 
         # initialize a concat dataset with the corresponding regions
         super().__init__(
-            [MaridaRegionDataset(path, region, **kwargs) for region in self.regions]
+            [MaridaRegionDataset(root, region, **kwargs) for region in self.regions]
         )
 
 
@@ -219,13 +221,13 @@ if __name__ == '__main__':
 
 
 
-    ds = MaridaDataset(path="/ssd/marinedebris/MARIDA", fold="train")
+    ds = MaridaDataset(root="/ssd/marinedebris/MARIDA", fold="train")
     print(len(ds))
 
-    ds = MaridaDataset(path="/ssd/marinedebris/MARIDA", fold="val")
+    ds = MaridaDataset(root="/ssd/marinedebris/MARIDA", fold="val")
     print(len(ds))
 
-    ds = MaridaDataset(path="/ssd/marinedebris/MARIDA", fold="test")
+    ds = MaridaDataset(root="/ssd/marinedebris/MARIDA", fold="test")
     print(len(ds))
 
     import matplotlib.pyplot as plt
