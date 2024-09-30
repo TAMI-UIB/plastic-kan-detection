@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - model: deep_u_con_kan
+  - model: deep_u_conv_kan
   - dataset: marida
 save_image: True
 sampling: 4
