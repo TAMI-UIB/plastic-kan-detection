@@ -19,6 +19,8 @@ class MetricCalculator:
 
     def update(self, preds, targets):
         preds = torch.sigmoid(preds)
+        if torch.sum(targets) <= 1e-3:
+            print("Aquesta mascara no te cap etiqueta")
         targets = targets.int()
         for i in range(preds.size(0)):
             for k, v in self.metrics.items():
@@ -40,7 +42,7 @@ if __name__ == '__main__':
     metrics = MetricCalculator(['accuracy', 'fscore', 'auroc', 'jaccard', 'kappa'])
 
     preds = torch.rand((1,1024,1024))
-    targets = 1-preds
+    targets = torch.rand((1,1024,1024))
     targets = torch.where(targets > 0.5, 1, 0)
 
     metrics.update(preds, targets)
