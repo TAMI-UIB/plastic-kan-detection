@@ -1,14 +1,15 @@
 import numpy as np
 import torch
 
-from torchmetrics.functional.classification import accuracy, f1_score, auroc, jaccard_index, cohen_kappa
+from torchmetrics.functional.classification import (binary_accuracy, binary_f1_score, binary_auroc, binary_jaccard_index,
+                                                    binary_cohen_kappa)
 
 metrics_dict = {
-    'accuracy': accuracy,
-    'fscore': f1_score,
-    'auroc': auroc,
-    'jaccard': jaccard_index,
-    'kappa': cohen_kappa,
+    'accuracy': binary_accuracy,
+    'fscore': binary_f1_score,
+    'auroc': binary_auroc,
+    'jaccard': binary_jaccard_index,
+    'kappa': binary_cohen_kappa,
 }
 
 class MetricCalculator:
