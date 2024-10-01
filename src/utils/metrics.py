@@ -20,7 +20,7 @@ class MetricCalculator:
     def update(self, preds, targets):
         preds = torch.sigmoid(preds)
         targets = targets.int()
-        if torch.sum(targets) == 0:
+        if torch.sum(targets) == 0 or torch.sum(preds) == 0:
             pass
         else:
             for i in range(preds.size(0)):
