@@ -18,6 +18,7 @@ class MetricCalculator:
         self.dict = {k: [] for k in self.metrics.keys()}
 
     def update(self, preds, targets):
+        preds = torch.sigmoid(preds)
         targets = targets.int()
         for i in range(preds.size(0)):
             for k, v in self.metrics.items():
@@ -39,7 +40,7 @@ if __name__ == '__main__':
     metrics = MetricCalculator(['accuracy', 'fscore', 'auroc', 'jaccard', 'kappa'])
 
     preds = torch.rand((1,1024,1024))
-    targets = torch.rand((1,1024,1024))
+    targets = 1-preds
     targets = torch.where(targets > 0.5, 1, 0)
 
     metrics.update(preds, targets)
