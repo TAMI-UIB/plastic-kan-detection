@@ -21,6 +21,7 @@ class MetricCalculator:
         inputs = torch.where(torch.exp(inputs) > 0.5, 1., 0.)
         targets = targets.int()
         for i in range(inputs.size(0)):
+            print(inputs[i].shape, targets[i].shape)
             for k, v in self.metrics.items():
                 self.dict[k].append(v(inputs[i].unsqueeze(0), targets[i].unsqueeze(0)).cpu().detach().numpy())
 
