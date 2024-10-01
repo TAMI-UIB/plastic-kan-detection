@@ -16,12 +16,11 @@ day: ${now:%Y-%m-%d}
 metrics:
   _target_: utils.metrics.MetricCalculator
   metrics_list:
-    - precision
-    - recall
-    - specificity
     - accuracy
-    - dice
-    - iou
+    - fscore
+    - auroc
+    - jaccard
+    - kappa
 nickname: "default"
 plot_interval: 2
 checkpoint:

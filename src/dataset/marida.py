@@ -6,6 +6,8 @@ import rasterio as rio
 import pandas as pd
 from rasterio.features import rasterize
 import numpy as np
+
+from src.dataset.refined_floatingobjects import RefinedFlobsDataset
 from .utils import read_tif_image, pad
 import torch
 
@@ -209,9 +211,14 @@ class MaridaDataset(ConcatDataset):
         self.regions = [r for r in self.regions if r in REGIONS]
 
         # initialize a concat dataset with the corresponding regions
-        super().__init__(
-            [MaridaRegionDataset(root, region, **kwargs) for region in self.regions]
-        )
+        if fold is not "test":
+            super().__init__(
+                [MaridaRegionDataset(root, region, **kwargs) for region in self.regions]
+            )
+        else:
+            flobstestdataset = RefinedFlobsDataset(root=os.path.join(root, "..", "refinedfloatingobjects"), fold="test", shuffle=True)
+            maridatestdataset = ConcatDataset([MaridaRegionDataset(root, region, **kwargs) for region in self.regions])
+            self.test_dataset = ConcatDataset([flobstestdataset, maridatestdataset])
 
 
 

@@ -1,35 +1,15 @@
 import numpy as np
 import torch
 
-from torchmetrics.functional.classification import binary_accuracy, dice, binary_precision, \
-    binary_recall, binary_specificity
-
-
-def IoU(inputs, targets, smooth=1):
-        inputs = torch.sigmoid(inputs)
-
-        # flatten label and prediction tensors
-        inputs = inputs.view(-1)
-        targets = targets.view(-1)
-
-        # intersection is equivalent to True Positive count
-        # union is the mutually inclusive area of all labels & predictions
-        intersection = (inputs * targets).sum()
-        total = (inputs + targets).sum()
-        union = total - intersection
-
-        result = (intersection + smooth) / (union + smooth)
-
-        return result
-
+from sklearn.metrics import roc_auc_score, precision_recall_fscore_support, \
+    cohen_kappa_score, jaccard_score, accuracy_score
 
 metrics_dict = {
-    'precision': binary_precision,
-    'recall': binary_recall,
-    'specificity': binary_specificity,
-    'accuracy': binary_accuracy,
-    'dice': dice,
-    'iou': IoU,
+    'accuracy': accuracy_score,
+    'fscore': precision_recall_fscore_support,
+    'auroc': roc_auc_score,
+    'jaccard': jaccard_score,
+    'kappa': cohen_kappa_score,
 }
 
 class MetricCalculator:
@@ -42,7 +22,11 @@ class MetricCalculator:
         targets = targets.int()
         for i in range(inputs.size(0)):
             for k, v in self.metrics.items():
-                self.dict[k].append(v(inputs[i].unsqueeze(0), targets[i].unsqueeze(0)).cpu().detach().numpy())
+                if k is 'fscore':
+                    _, _, f, _ = v(inputs[i].unsqueeze(0), targets[i].unsqueeze(0), zero_division=0, average="binary")
+                    self.dict[k].append(f.cpu().detach().numpy())
+                else:
+                    self.dict[k].append(v(inputs[i].unsqueeze(0), targets[i].unsqueeze(0)).cpu().detach().numpy())
 
     def clean(self):
         self.dict = {k: [] for k in self.metrics.keys()}
