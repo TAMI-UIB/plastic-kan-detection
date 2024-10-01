@@ -25,6 +25,12 @@ class MetricCalculator:
         else:
             for i in range(preds.size(0)):
                 for k, v in self.metrics.items():
+                    if k == "jaccard":
+                        value = v(preds[i].unsqueeze(0), targets[i].unsqueeze(0))
+                        if torch.isnan(value).any():
+                            preds_aux = preds.where(preds > 0.5, 1., 0.)
+                        print(torch.sum(targets * preds_aux), torch.sum(targets + preds_aux))
+
                     self.dict[k].append(v(preds[i].unsqueeze(0), targets[i].unsqueeze(0)).cpu().detach().numpy())
 
     def clean(self):
