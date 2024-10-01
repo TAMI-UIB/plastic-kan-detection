@@ -7,7 +7,7 @@ import pandas as pd
 from rasterio.features import rasterize
 import numpy as np
 
-from src.dataset.refined_floatingobjects import RefinedFlobsDataset
+from refined_floatingobjects import RefinedFlobsDataset
 from .utils import read_tif_image, pad
 import torch
 
