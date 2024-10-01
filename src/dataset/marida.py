@@ -1,15 +1,16 @@
-import rasterio.windows
-from torch.utils.data import Dataset, ConcatDataset
-import geopandas as gpd
 import os
-import rasterio as rio
-import pandas as pd
-from rasterio.features import rasterize
-import numpy as np
 
-from .refined_floatingobjects import RefinedFlobsDataset
-from .utils import read_tif_image, pad
+import geopandas as gpd
+import numpy as np
+import pandas as pd
+import rasterio as rio
+import rasterio.windows
 import torch
+from rasterio.features import rasterize
+from torch.utils.data import Dataset, ConcatDataset
+
+from .refined_floatingobjects import RefinedFlobsQualitativeRegionDataset
+from .utils import read_tif_image, pad
 
 # regions where we could not re-download the corresponding tif image
 
@@ -216,7 +217,7 @@ class MaridaDataset(ConcatDataset):
                 [MaridaRegionDataset(root, region, **kwargs) for region in self.regions]
             )
         else:
-            flobstestdataset = RefinedFlobsDataset(root=os.path.join(root, "..", "refinedfloatingobjects"), fold="test", shuffle=True)
+            flobstestdataset = RefinedFlobsQualitativeRegionDataset(root=os.path.join(root, "..", "refinedfloatingobjects"), fold="test", shuffle=True)
             maridatestdataset = ConcatDataset([MaridaRegionDataset(root, region, **kwargs) for region in self.regions])
             super().__init__([flobstestdataset, maridatestdataset])
 
