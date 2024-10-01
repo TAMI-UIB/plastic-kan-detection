@@ -98,6 +98,7 @@ class GDriveLogger(Callback):
                     "nickname": [pl_module.cfg.nickname],
                     "parameters": [pl_module.num_params],
                     **{key: [value] for key, value in metrics['mean'].items()}, "log_path": [trainer.log_dir]}
+            print(data)
             new_data = pd.DataFrame(data)
             csv_logger = pd.concat([csv_logger, new_data])
             csv_logger.to_csv(file_name, index=False)
