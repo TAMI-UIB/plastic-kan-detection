@@ -217,7 +217,8 @@ class MaridaDataset(ConcatDataset):
                 [MaridaRegionDataset(root, region, **kwargs) for region in self.regions]
             )
         else:
-            flobstestdataset = RefinedFlobsQualitativeDataset(root=os.path.join(root, "..", "refinedfloatingobjects"), fold="test")
+            flobstestdataset = RefinedFlobsQualitativeDataset(root=os.path.join(root, "..", "refinedfloatingobjects"),
+                                                              fold="test", output_size=256)
             maridatestdataset = ConcatDataset([MaridaRegionDataset(root, region, **kwargs) for region in self.regions])
             super().__init__([flobstestdataset, maridatestdataset])
 
