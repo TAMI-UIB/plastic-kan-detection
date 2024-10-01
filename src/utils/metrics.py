@@ -18,6 +18,7 @@ class MetricCalculator:
         self.dict = {k: [] for k in self.metrics.keys()}
 
     def update(self, preds, targets):
+        targets = targets.int()
         for i in range(preds.size(0)):
             for k, v in self.metrics.items():
                 self.dict[k].append(v(preds[i].unsqueeze(0), targets[i].unsqueeze(0)).cpu().detach().numpy())
