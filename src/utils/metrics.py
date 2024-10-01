@@ -4,11 +4,20 @@ import torch
 from torchmetrics.functional.classification import (binary_accuracy, binary_f1_score, binary_auroc, binary_jaccard_index,
                                                     binary_cohen_kappa)
 
+def jaccard(pred, target):
+    pred = torch.where(pred > 0.5, 1., 0.)
+    target = target.int()
+
+    inter = target * pred
+    union = target + pred - inter
+    return inter.sum() / union.sum()
+
+
 metrics_dict = {
     'accuracy': binary_accuracy,
     'fscore': binary_f1_score,
     'auroc': binary_auroc,
-    'jaccard': binary_jaccard_index,
+    'jaccard': jaccard,
     'kappa': binary_cohen_kappa,
 }
 
