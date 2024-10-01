@@ -26,7 +26,7 @@ class TestMetricLogger(Callback):
                 csv_logger = pd.read_csv(file_name)
             except FileNotFoundError:
                 csv_logger = pd.DataFrame()
-            metrics = pl_module.eval_metrics[subset].get_statistics()
+            metrics = pl_module.metrics[subset].get_statistics()
             data = {"day": [str(self.day)], "model": [self.name],
                     **{key: [value] for key, value in metrics['mean'].items()}}
             new_data = pd.DataFrame(data)
@@ -203,7 +203,7 @@ class TestMetricPerImage(Callback):
         filename = [f'{os.environ["LOG_DIR"]}/{dataset}/evaluation-report/{nickname}_{k}_sampling_{pl_module.cfg.sampling}.csv' for k in trainer.test_dataloaders.keys()]
         subset = trainer.test_dataloaders.keys()
         for i, subset in enumerate(subset):
-            metric_dict = pl_module.eval_metrics[subset].get_dict()
+            metric_dict = pl_module.metrics[subset].get_dict()
             csv_logger = pd.DataFrame(metric_dict)
             csv_logger.to_csv(filename[i], index=True)
 
