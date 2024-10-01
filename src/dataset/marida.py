@@ -9,7 +9,7 @@ import torch
 from rasterio.features import rasterize
 from torch.utils.data import Dataset, ConcatDataset
 
-from .refined_floatingobjects import RefinedFlobsQualitativeRegionDataset
+from .refined_floatingobjects import RefinedFlobsQualitativeDataset
 from .utils import read_tif_image, pad
 
 # regions where we could not re-download the corresponding tif image
@@ -217,7 +217,7 @@ class MaridaDataset(ConcatDataset):
                 [MaridaRegionDataset(root, region, **kwargs) for region in self.regions]
             )
         else:
-            flobstestdataset = RefinedFlobsQualitativeRegionDataset(root=os.path.join(root, "..", "refinedfloatingobjects"), fold="test", shuffle=True)
+            flobstestdataset = RefinedFlobsQualitativeDataset(root=os.path.join(root, "..", "refinedfloatingobjects"), fold="test", shuffle=True)
             maridatestdataset = ConcatDataset([MaridaRegionDataset(root, region, **kwargs) for region in self.regions])
             super().__init__([flobstestdataset, maridatestdataset])
 
