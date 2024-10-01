@@ -22,7 +22,7 @@ class MetricCalculator:
         targets = targets.int()
         for i in range(inputs.size(0)):
             for k, v in self.metrics.items():
-                self.dict[k].append(v(inputs[i].unsqueeze(0), targets[i].unsqueeze(0))).cpu().detach().numpy()
+                self.dict[k].append(v(inputs[i].unsqueeze(0), targets[i].unsqueeze(0)).cpu().detach().numpy())
 
     def clean(self):
         self.dict = {k: [] for k in self.metrics.keys()}
