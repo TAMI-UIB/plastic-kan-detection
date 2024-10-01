@@ -23,10 +23,13 @@ class MetricCalculator:
         for i in range(inputs.size(0)):
             for k, v in self.metrics.items():
                 if k == 'fscore':
-                    _, _, f, _ = v(inputs[i].unsqueeze(0), targets[i].unsqueeze(0), zero_division=0, average="binary")
-                    self.dict[k].append(f.cpu().detach().numpy())
+                    _, _, f, _ = v(inputs[i].unsqueeze(0).cpu().detach().numpy(),
+                                   targets[i].unsqueeze(0).cpu().detach().numpy(),
+                                   zero_division=0, average="binary")
+                    self.dict[k].append(f)
                 else:
-                    self.dict[k].append(v(inputs[i].unsqueeze(0), targets[i].unsqueeze(0)).cpu().detach().numpy())
+                    self.dict[k].append(v(inputs[i].unsqueeze(0).cpu().detach().numpy(),
+                                          targets[i].unsqueeze(0).cpu().detach().numpy()))
 
     def clean(self):
         self.dict = {k: [] for k in self.metrics.keys()}
