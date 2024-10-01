@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from torch.utils.data import Dataset, ConcatDataset
 import geopandas as gpd
@@ -143,7 +144,8 @@ class RefinedFlobsQualitativeRegionDataset(Dataset):
     def __getitem__(self, item):
         image, mask = self.images[item]
         image = image * 1e-4
-        print(type(image), image.shape)
+        image = torch.Tensor(image)
+        mask = torch.Tensor(np.expand_dims(mask, axis=0))
         return image, mask, f"{self.region}-{item}"
 
 class RefinedFlobsQualitativeDataset(ConcatDataset):
