@@ -32,7 +32,7 @@ class MetricCalculator:
                             jaccard = torch.sum(targets[i] * preds_aux) / torch.sum(
                                 torch.where(targets[i] + preds_aux == 2, 1, targets[i] + preds_aux))
                             print(jaccard)
-                        self.dict[k].append(jaccard)
+                            self.dict[k].append(jaccard)
 
                     self.dict[k].append(v(preds[i].unsqueeze(0), targets[i].unsqueeze(0)).cpu().detach().numpy())
 
