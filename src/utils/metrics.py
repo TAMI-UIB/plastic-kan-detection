@@ -18,8 +18,6 @@ class MetricCalculator:
         self.dict = {k: [] for k in self.metrics.keys()}
 
     def update(self, preds, targets):
-        preds = torch.where(torch.exp(preds) > 0.5, 1., 0.)
-        targets = targets.int()
         for i in range(preds.size(0)):
             for k, v in self.metrics.items():
                 self.dict[k].append(v(preds[i].unsqueeze(0), targets[i].unsqueeze(0)).cpu().detach().numpy())
@@ -28,9 +26,20 @@ class MetricCalculator:
         self.dict = {k: [] for k in self.metrics.keys()}
 
     def get_statistics(self):
-        mean_dict = {f"{k}": np.mean(v) for k, v in self.dict.items()}
-        std_dict = {f"{k}": np.std(v) for k, v in self.dict.items()}
+        mean_dict = {f"{k}": np.mean(v).item() for k, v in self.dict.items()}
+        std_dict = {f"{k}": np.std(v).item() for k, v in self.dict.items()}
         return {"mean": mean_dict, "std": std_dict}
 
     def get_dict(self):
         return self.dict
+
+
+if __name__ == '__main__':
+    metrics = MetricCalculator(['accuracy', 'fscore', 'auroc', 'jaccard', 'kappa'])
+
+    preds = torch.rand((1,1024,1024))
+    targets = torch.rand((1,1024,1024))
+    targets = torch.where(targets > 0.5, 1, 0)
+
+    metrics.update(preds, targets)
+    print(metrics.get_statistics())

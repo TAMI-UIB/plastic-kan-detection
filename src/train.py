@@ -29,12 +29,12 @@ def train(cfg: DictConfig):
     csv_log_path = f"{os.environ['LOG_DIR']}/{cfg.dataset.name}"
 
     default_callbacks = [
-                         TBoardLogger(day=cfg.day, name=cfg.model.name),
-                         ImagePlotCallback(plot_interval=cfg.plot_interval),
-                         GDriveLogger(day=cfg.day, name=cfg.model.name, path=csv_log_path),
-                         RichModelSummary(max_depth=3),
-                         instantiate(cfg.checkpoint),
-                         ]
+        TBoardLogger(day=cfg.day, name=cfg.model.name),
+        ImagePlotCallback(plot_interval=cfg.plot_interval),
+        GDriveLogger(day=cfg.day, name=cfg.model.name, path=csv_log_path),
+        RichModelSummary(max_depth=3),
+        instantiate(cfg.checkpoint),
+    ]
 
     callback_list = instantiate(cfg.model.callbacks) + default_callbacks if hasattr(cfg.model, 'callbacks') else default_callbacks
     trainer = Trainer(max_epochs=cfg.model.train.max_epochs, logger=logger,
