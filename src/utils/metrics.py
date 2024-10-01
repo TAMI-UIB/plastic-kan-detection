@@ -19,12 +19,13 @@ class MetricCalculator:
 
     def update(self, preds, targets):
         preds = torch.sigmoid(preds)
-        if torch.sum(targets) <= 1e-3:
-            print("Aquesta mascara no te cap etiqueta")
         targets = targets.int()
-        for i in range(preds.size(0)):
-            for k, v in self.metrics.items():
-                self.dict[k].append(v(preds[i].unsqueeze(0), targets[i].unsqueeze(0)).cpu().detach().numpy())
+        if torch.sum(targets) == 0:
+            pass
+        else:
+            for i in range(preds.size(0)):
+                for k, v in self.metrics.items():
+                    self.dict[k].append(v(preds[i].unsqueeze(0), targets[i].unsqueeze(0)).cpu().detach().numpy())
 
     def clean(self):
         self.dict = {k: [] for k in self.metrics.keys()}
