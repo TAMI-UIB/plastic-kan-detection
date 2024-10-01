@@ -143,6 +143,7 @@ class RefinedFlobsQualitativeRegionDataset(Dataset):
     def __getitem__(self, item):
         image, mask = self.images[item]
         image = image * 1e-4
+        print(type(image), image.shape)
         return image, mask, f"{self.region}-{item}"
 
 class RefinedFlobsQualitativeDataset(ConcatDataset):
