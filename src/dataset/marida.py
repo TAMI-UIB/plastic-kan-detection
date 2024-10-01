@@ -211,7 +211,7 @@ class MaridaDataset(ConcatDataset):
         self.regions = [r for r in self.regions if r in REGIONS]
 
         # initialize a concat dataset with the corresponding regions
-        if fold is not "test":
+        if fold != "test":
             super().__init__(
                 [MaridaRegionDataset(root, region, **kwargs) for region in self.regions]
             )

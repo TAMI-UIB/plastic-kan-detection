@@ -22,7 +22,7 @@ class MetricCalculator:
         targets = targets.int()
         for i in range(inputs.size(0)):
             for k, v in self.metrics.items():
-                if k is 'fscore':
+                if k == 'fscore':
                     _, _, f, _ = v(inputs[i].unsqueeze(0), targets[i].unsqueeze(0), zero_division=0, average="binary")
                     self.dict[k].append(f.cpu().detach().numpy())
                 else:
