@@ -20,10 +20,6 @@ class MetricCalculator:
     def update(self, preds, targets):
         preds = torch.where(preds > 0.5, 1., 0.)
         targets = targets.int()
-        if torch.isnan(preds).any():
-            print("Nans a la predicció")
-        if torch.isnan(targets).any():
-            print("Nans als targets")
         for i in range(preds.size(0)):
             for k, v in self.metrics.items():
                 if torch.sum(targets[i]) == 0 and torch.sum(preds[i]) == 0:
