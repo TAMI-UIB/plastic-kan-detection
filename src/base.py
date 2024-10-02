@@ -47,9 +47,8 @@ class Experiment(pl.LightningModule):
 
     def test_step(self, batch, batch_idx, dataloader_idx=0):
         low, gt, name = batch
-        print(dataloader_idx)
         output = self.forward(low)
-        self.metrics['test'].update(preds=output, targets=gt)
+        self.metrics[self.subsets[dataloader_idx]].update(preds=output, targets=gt)
 
     def configure_optimizers(self):
         optimizer = instantiate(self.cfg.model.optimizer,params=self.parameters())
