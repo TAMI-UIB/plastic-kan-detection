@@ -10,6 +10,7 @@ def jaccard(pred, target):
 
     inter = target * pred
     union = target + pred - inter
+    print(inter.sum(), union.sum())
     return inter.sum() / union.sum()
 
 
