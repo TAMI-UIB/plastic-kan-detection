@@ -4,18 +4,11 @@ import torch
 from torchmetrics.functional.classification import (binary_accuracy, binary_f1_score, binary_auroc, binary_jaccard_index,
                                                     binary_cohen_kappa)
 
-def jaccard(pred, target):
-    inter = target * pred
-    union = target + pred - inter
-    print(inter.sum(), union.sum())
-    return inter.sum() / union.sum()
-
-
 metrics_dict = {
     'accuracy': binary_accuracy,
     'fscore': binary_f1_score,
     'auroc': binary_auroc,
-    'jaccard': jaccard,
+    'jaccard': binary_jaccard_index,
     'kappa': binary_cohen_kappa,
 }
 
@@ -27,6 +20,10 @@ class MetricCalculator:
     def update(self, preds, targets):
         preds = torch.where(preds > 0.5, 1., 0.)
         targets = targets.int()
+        if torch.isnan(preds).any():
+            print("Nans a la predicció")
+        if torch.isnan(targets).any():
+            print("Nans als targets")
         for i in range(preds.size(0)):
             for k, v in self.metrics.items():
                 if torch.sum(targets[i]) == 0 and torch.sum(preds[i]) == 0:
