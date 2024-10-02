@@ -47,6 +47,7 @@ class Experiment(pl.LightningModule):
 
     def test_step(self, batch, batch_idx, dataloader_idx=0):
         low, gt, name = batch
+        print(dataloader_idx)
         output = self.forward(low)
         self.metrics['test'].update(preds=output, targets=gt)
 
