@@ -5,9 +5,6 @@ from torchmetrics.functional.classification import (binary_accuracy, binary_f1_s
                                                     binary_cohen_kappa)
 
 def jaccard(pred, target):
-    pred = torch.where(pred > 0.5, 1., 0.)
-    target = target.int()
-
     inter = target * pred
     union = target + pred - inter
     print(inter.sum(), union.sum())
@@ -28,13 +25,13 @@ class MetricCalculator:
         self.dict = {k: [] for k in self.metrics.keys()}
 
     def update(self, preds, targets):
-        preds = torch.sigmoid(preds)
+        preds = torch.where(preds > 0.5, 1., 0.)
         targets = targets.int()
-        if torch.sum(targets) == 0 or torch.sum(preds) == 0:
-            pass
-        else:
-            for i in range(preds.size(0)):
-                for k, v in self.metrics.items():
+        for i in range(preds.size(0)):
+            for k, v in self.metrics.items():
+                if torch.sum(targets[i]) == 0 and torch.sum(preds[i]) == 0:
+                    self.dict[k].append(torch.tensor(1.0).cpu().detach().numpy())
+                else:
                     self.dict[k].append(v(preds[i].unsqueeze(0), targets[i].unsqueeze(0)).cpu().detach().numpy())
 
     def clean(self):
