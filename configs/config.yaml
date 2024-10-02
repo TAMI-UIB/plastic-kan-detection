@@ -25,7 +25,7 @@ nickname: "default"
 plot_interval: 2
 checkpoint:
   _target_:  pytorch_lightning.callbacks.ModelCheckpoint
-  monitor: 'validation_dice'
+  monitor: 'validation_auroc'
   filename: 'best'
   save_last: True
   mode: 'max'
