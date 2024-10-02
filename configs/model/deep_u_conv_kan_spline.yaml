@@ -1,14 +1,15 @@
-name: MeanNet
-goal: mean_net
+name: DeepUConvKANSpline
+goal: deep_u_conv_kan_spline
 shared: False
 module:
-  _target_: model.mean_net.MeanNet
+  _target_: model.deep_u_conv_kan_spline.DeepUConvKANSpline
   _recursive_: False
+  channels: ${dataset.ms_channels}
   hidden_channels: 64
 train:
-  batch_size: 100
+  batch_size: 10
   num_workers: 16
-  max_epochs: 40
+  max_epochs: 50
 loss:
   _target_: loss.DiceBCELoss
 

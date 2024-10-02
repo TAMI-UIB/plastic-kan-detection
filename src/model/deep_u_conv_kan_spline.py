@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torchvision.transforms import CenterCrop
 
-from .components.kan import FastKANConv2DLayer as KANConv2D
+from .components.kan import FastKANConvLayer as KANConv2D
 
 class DobleConv(nn.Module):
     """
@@ -24,8 +24,8 @@ class DobleConv(nn.Module):
         """
         super(DobleConv, self).__init__()
 
-        self.conv1 = KANConv2D(in_channels, mid_channels, kernel_size=3, padding=1)
-        self.conv2 = KANConv2D(mid_channels, out_channels, kernel_size=3, padding=1)
+        self.conv1 = KANConv2D(in_channels, mid_channels, kernel_size=3, padding=1, kan_type="BSpline")
+        self.conv2 = KANConv2D(mid_channels, out_channels, kernel_size=3, padding=1, kan_type="BSpline")
         self.BN = BN
         if self.BN:
             self.bn1 = nn.BatchNorm2d(mid_channels, momentum=0.01)
@@ -80,13 +80,13 @@ class UpBlock(nn.Module):
 
 
 
-class DeepUConvKAN(nn.Module):
+class DeepUConvKANSpline(nn.Module):
     """
     DeepUConvKAN: A Deep Fully Convolutional Network for Pixel-level Sea-Land Segmentation
     https://arxiv.org/abs/1709.00201
     """
     def __init__(self, channels, hidden_channels, n_classes=1, BN=True):
-        super(DeepUConvKAN, self).__init__()
+        super(DeepUConvKANSpline, self).__init__()
 
         self.doble_conv = DobleConv(channels, 2 * hidden_channels, hidden_channels, BN)
         self.down_block1 = DownBlock(hidden_channels, 2 * hidden_channels, hidden_channels, BN)
@@ -98,7 +98,7 @@ class DeepUConvKAN(nn.Module):
         self.up_block2 = UpBlock(hidden_channels, hidden_channels, 2 * hidden_channels, hidden_channels, BN)
         self.up_block3 = UpBlock(hidden_channels, hidden_channels, 2 * hidden_channels, hidden_channels, BN)
         self.up_block4 = UpBlock(hidden_channels, hidden_channels, 2 * hidden_channels, hidden_channels, BN)
-        self.out = KANConv2D(hidden_channels, n_classes, kernel_size=1)
+        self.out = KANConv2D(hidden_channels, n_classes, kernel_size=1, kan_type="BSpline")
 
     def forward(self, x):
         x1 = self.doble_conv(x)
