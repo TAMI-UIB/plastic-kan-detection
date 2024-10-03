@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - model: u_net
+  - model: deep_u_conv_kan_wavelet
   - dataset: marida
 save_image: True
 sampling: 4
