@@ -1,0 +1,9 @@
+name: MarcUnet
+goal: marc_unet
+shared: False
+module:
+  _target_: sota.marinedebrisdetector.marinedebrisdetector.model.unet.UNet
+  _recursive_: False
+  channels: ${dataset.ms_channels}
+  hidden_channels: 64
+weights_path: /home/ivan/projects/plastic-kan-detection/src/sota/marinedebrisdetector/epoch=33-val_loss=0.59-auroc=0.985.ckpt

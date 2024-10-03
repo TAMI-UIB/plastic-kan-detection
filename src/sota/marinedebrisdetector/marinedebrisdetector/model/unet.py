@@ -112,18 +112,3 @@ class UNet(nn.Module):
         x = self.up4(x, x1)
         logits = self.outc(x)
         return logits
-
-
-
-if __name__ == '__main__':
-    import segmentation_models_pytorch as smp
-    print("Loading...")
-    ckpt = torch.load("/home/ivan/projects/plastic-kan-detection/src/sota/marinedebrisdetector/epoch=95-val_loss=0.63-auroc=0.986.ckpt")
-    print(ckpt.keys())
-    weights = ckpt['state_dict']
-    print("abans de instanciar")
-    model = smp.UnetPlusPlus(in_channels=12, classes=1)
-    print("ho ha instanciat")
-    model.load_state_dict(weights)
-    print("ho ha carregat")
-    # test()
