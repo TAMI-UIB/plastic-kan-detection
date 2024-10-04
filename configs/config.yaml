@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - model: marc_unet
+  - model: deep_u_conv_kan_spline
   - dataset: marida
 save_image: True
 sampling: 4

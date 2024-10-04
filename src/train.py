@@ -33,7 +33,7 @@ def train(cfg: DictConfig):
     csv_log_path = f"{os.environ['LOG_DIR']}/{cfg.dataset.name}"
 
     default_callbacks = [
-        WindowConvergence(),
+        # WindowConvergence(),
         TBoardLogger(day=cfg.day, name=cfg.model.name),
         ImagePlotCallback(plot_interval=cfg.plot_interval),
         GDriveLogger(day=cfg.day, name=cfg.model.name, path=csv_log_path),
