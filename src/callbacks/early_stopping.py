@@ -15,7 +15,7 @@ class WindowConvergence(Callback):
         self.converged = False
 
     def on_train_epoch_start(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
-        trainer.should_stop = not self.converged
+        trainer.should_stop = self.converged
 
     def on_validation_epoch_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
         value = trainer.callback_metrics.get(self.monitor)
