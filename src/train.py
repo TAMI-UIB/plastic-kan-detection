@@ -12,6 +12,7 @@ os.environ["PROJECT_ROOT"] = os.path.dirname(os.path.dirname(os.path.abspath(__f
 load_dotenv(os.path.join(os.environ["PROJECT_ROOT"], ".env"))
 
 from callbacks.logger import TBoardLogger, ImagePlotCallback, GDriveLogger
+from callbacks.early_stopping import WindowConvergence
 from base import Experiment
 from hydra.utils import instantiate
 
@@ -22,6 +23,9 @@ def train(cfg: DictConfig):
     print(OmegaConf.to_yaml(cfg))
     train_loader = instantiate(cfg.dataset.train)
     validation_loader = instantiate(cfg.dataset.validation)
+    test_loader = instantiate(cfg.dataset.test)
+    dataloaders = {"train": train_loader, "validation": validation_loader, "test": test_loader}
+
     experiment = Experiment(cfg)
 
     tb_log_dir = f'{os.environ["LOG_DIR"]}/{cfg.dataset.name}/x{cfg.sampling}/{cfg.day}/{cfg.model.name}/'
@@ -29,6 +33,7 @@ def train(cfg: DictConfig):
     csv_log_path = f"{os.environ['LOG_DIR']}/{cfg.dataset.name}"
 
     default_callbacks = [
+        WindowConvergence(),
         TBoardLogger(day=cfg.day, name=cfg.model.name),
         ImagePlotCallback(plot_interval=cfg.plot_interval),
         GDriveLogger(day=cfg.day, name=cfg.model.name, path=csv_log_path),
@@ -42,13 +47,6 @@ def train(cfg: DictConfig):
                       callbacks=callback_list, accelerator="auto")
 
     trainer.fit(experiment, train_loader, validation_loader)
-
-    # ckpt = torch.load(f"{trainer.log_dir}/checkpoints/last.ckpt")
-    # weights = ckpt['state_dict']
-    # experiment.load_state_dict(weights)
-    test_loader = instantiate(cfg.dataset.test)
-    dataloaders = {"train": train_loader, "validation": validation_loader, "test": test_loader}
-
     trainer.test(experiment, dataloaders=dataloaders)
     exit(0)
 
