@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch
 import torch.nn.functional as F
 from functorch.einops import rearrange
-
+from torchmetrics.functional import spectral_angle_mapper
 
 class FocalLoss(nn.Module):
     def __init__(self, gamma=2):
@@ -125,3 +125,14 @@ class IoULoss(nn.Module):
         IoU = (intersection + smooth) / (union + smooth)
 
         return 1 - IoU, {'IoU': 1-IoU}
+
+class PSLoss(nn.Module):
+    def __init__(self):
+        super(PSLoss, self).__init__()
+
+    def components(self):
+        return ['mse']
+
+    def forward(self, pred, target):
+        mse = self.MSEloss(pred, target)
+        return mse, {'mse': mse}

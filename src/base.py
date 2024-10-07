@@ -30,24 +30,24 @@ class Experiment(pl.LightningModule):
         return self.model(low)
 
     def training_step(self, input, idx):
-        low, gt, name = input
-        output = self.forward(low)
-        loss, loss_dict = self.loss_criterion(output, gt)
+        gt = input['gt']
+        output = self.forward(**input)
+        loss, loss_dict = self.loss_criterion(preds=output, targets=gt)
         self.metrics['train'].update(preds=output, targets=gt)
         self.loss_report(loss, loss_dict, 'train')
         return loss
 
     def validation_step(self, input, idx):
-        low, gt, name = input
-        output = self.forward(low)
-        loss, loss_dict = self.loss_criterion(output, gt)
+        gt = input['gt']
+        output = self.forward(**input)
+        loss, loss_dict = self.loss_criterion(preds=output, targets=gt)
         self.metrics['validation'].update(preds=output, targets=gt)
         self.loss_report(loss, loss_dict, 'validation')
         return loss
 
     def test_step(self, batch, batch_idx, dataloader_idx=0):
-        low, gt, name = batch
-        output = self.forward(low)
+        gt = batch['gt']
+        output = self.forward(**batch)
         self.metrics[self.subsets[dataloader_idx]].update(preds=output, targets=gt)
 
     def configure_optimizers(self):

@@ -1,0 +1,29 @@
+name: marida
+ms_channels: 14
+train:
+  _target_: torch.utils.data.DataLoader
+  dataset:
+    _target_: dataset.${dataset.name}.MaridaDataset
+    root: ${oc.env:DATASET_PATH}/MARIDA
+    fold: train
+  batch_size: ${model.train.batch_size}
+  num_workers: ${model.train.num_workers}
+  shuffle: True
+validation:
+  _target_: torch.utils.data.DataLoader
+  dataset:
+    _target_: dataset.${dataset.name}.MaridaDataset
+    root: ${oc.env:DATASET_PATH}/MARIDA
+    fold: val
+  batch_size: ${model.train.batch_size}
+  num_workers: ${model.train.num_workers}
+  shuffle: False
+test:
+  _target_: torch.utils.data.DataLoader
+  dataset:
+    _target_: dataset.${dataset.name}.MaridaDataset
+    root: ${oc.env:DATASET_PATH}/MARIDA
+    fold: test
+  batch_size: ${model.train.batch_size}
+  num_workers: ${model.train.num_workers}
+  shuffle: False

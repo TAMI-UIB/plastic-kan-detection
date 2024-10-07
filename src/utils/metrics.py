@@ -2,7 +2,8 @@ import numpy as np
 import torch
 
 from torchmetrics.functional.classification import (binary_accuracy, binary_f1_score, binary_auroc, binary_jaccard_index,
-                                                    binary_cohen_kappa)
+                                                    binary_cohen_kappa, dice, binary_specificity, binary_recall,
+                                                    binary_precision)
 
 metrics_dict = {
     'accuracy': binary_accuracy,
@@ -10,6 +11,11 @@ metrics_dict = {
     'auroc': binary_auroc,
     'jaccard': binary_jaccard_index,
     'kappa': binary_cohen_kappa,
+    'precision': binary_precision,
+    'recall': binary_recall,
+    'specificity': binary_specificity,
+    'dice': dice,
+    'iou': binary_jaccard_index,
 }
 
 class MetricCalculator:

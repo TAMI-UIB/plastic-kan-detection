@@ -1,0 +1,36 @@
+name: ModelPansharpeningSharingOperators
+goal: ps_model
+shared: False
+module:
+  _target_: model.ps_model.ModelPansharpeningSharingOperators
+  _recursive_: False
+  kernel_size: 5
+  std: 1
+  panchro_size: 128
+  ms_size: 64
+  n_resblocks: 1
+  n_channels: 4
+  n_iterations: 20
+  learn_B: true
+  learn_upsample: true
+  learn_p_tilde: true
+  learn_u_tilde: true
+train:
+  batch_size: 10
+  num_workers: 16
+  max_epochs: 500
+loss:
+  _target_: loss.PSLoss
+
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 1.e-4
+  betas:
+    - 0.9
+    - 0.999
+  eps: 1.e-8
+scheduler:
+  _target_: torch.optim.lr_scheduler.MultiStepLR
+  milestones:
+    - 1000
+  gamma: 1
