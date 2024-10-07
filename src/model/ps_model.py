@@ -1,18 +1,13 @@
-import math
 import torch
 import torch.nn as nn
 import torchvision
-import numpy as np
-from torchmetrics.functional import spectral_angle_mapper
-from torchmetrics.functional import peak_signal_noise_ratio
 
 
 class ModelPansharpeningSharingOperators(nn.Module):
     def __init__(self, kernel_size, std, panchro_size, ms_size, n_resblocks, n_channels, n_iterations,
-                 learn_B, learn_upsample, learn_p_tilde, learn_u_tilde, device):
+                 learn_B, learn_upsample, learn_p_tilde, learn_u_tilde):
         super().__init__()
 
-        self.device = device
         self.n_channels = n_channels
         self.iterations = n_iterations
 
@@ -42,12 +37,10 @@ class ModelPansharpeningSharingOperators(nn.Module):
         self.prox = ProxNet(n_channels, n_channels, n_resblocks)
 
         # Learnable parameters
-        self.gamma = nn.Parameter(torch.Tensor([1]).to(self.device))
-        self.tau = nn.Parameter(torch.Tensor([0.05]).to(self.device))
-        self.lmb = nn.Parameter(torch.Tensor([1000]).to(self.device))
-        self.mu = nn.Parameter(torch.Tensor([10]).to(self.device))
-
-        self.MSEloss = nn.MSELoss(reduction='mean')
+        self.gamma = nn.Parameter(torch.Tensor([1]))
+        self.tau = nn.Parameter(torch.Tensor([0.05]))
+        self.lmb = nn.Parameter(torch.Tensor([1000]))
+        self.mu = nn.Parameter(torch.Tensor([10]))
 
         # make tildes
         self.learn_p_tilde = learn_p_tilde
@@ -64,9 +57,9 @@ class ModelPansharpeningSharingOperators(nn.Module):
 
     def forward(self, ms, pan, p_tilde, u_tilde, **kwargs):
 
-        u = torch.zeros_like(pan).to(self.device)
-        p = torch.zeros_like(pan).to(self.device)
-        q = torch.zeros_like(ms).to(self.device)
+        u = torch.zeros_like(pan)
+        p = torch.zeros_like(pan)
+        q = torch.zeros_like(ms)
 
         u_barra = u.clone()
 
