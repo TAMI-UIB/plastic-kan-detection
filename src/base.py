@@ -1,12 +1,21 @@
 import os
 from typing import Dict, Any
 
+import numpy as np
 import pytorch_lightning as pl
+import torch
 from hydra.utils import instantiate
 from omegaconf import DictConfig
 from torchvision.utils import save_image
 
+from utils.images import calculate_fdi, calculate_ndvi
+
 pl.seed_everything(42)
+
+bands = ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B8A", "B9", "B11", "B12"]
+indexes20m = [bands.index(band) for band in ['B5', 'B6', 'B7', 'B8A']]
+
+
 class Experiment(pl.LightningModule):
     def __init__(self, cfg: DictConfig):
         super(Experiment, self).__init__()
@@ -25,22 +34,41 @@ class Experiment(pl.LightningModule):
         # Loss report
         self.loss = {subset: 0 for subset in self.fit_subsets}
         self.loss_components = {subset: {k: 0 for k in self.loss_criterion.components()} for subset in self.fit_subsets}
+        self.ps_model = None
 
-    def forward(self, low):
-        return self.model(low)
+    def forward(self, **kwargs):
+        return self.model(**kwargs)
 
     def training_step(self, input, idx):
-        gt = input['gt']
+        gt = input.pop('gt')
+        if self.ps_model:
+            images = input.pop('image')
+            highres = self.ps_model(**input)
+            images[:, indexes20m, :, :] = highres
+            images = images[:, 0:12, :, :]
+            fdis = torch.Tensor(np.array([[calculate_fdi(image)] for image in images.cpu().detach().numpy()]))
+            ndvis = torch.Tensor(np.array([[calculate_ndvi(image)] for image in images.cpu().detach().numpy()]))
+            input.update({'x': torch.cat([images, fdis, ndvis], dim=1)})
+
         output = self.forward(**input)
-        loss, loss_dict = self.loss_criterion(preds=output, targets=gt)
+        loss, loss_dict = self.loss_criterion(pred=output, target=gt)
         self.metrics['train'].update(preds=output, targets=gt)
         self.loss_report(loss, loss_dict, 'train')
         return loss
 
     def validation_step(self, input, idx):
-        gt = input['gt']
+        gt = input.pop('gt')
+        if self.ps_model:
+            images = input.pop('image')
+            highres = self.ps_model(**input)
+            images[:, indexes20m, :, :] = highres
+            images = images[:, 0:12, :, :]
+            fdis = torch.Tensor(np.array([[calculate_fdi(image)] for image in images.cpu().detach().numpy()]))
+            ndvis = torch.Tensor(np.array([[calculate_ndvi(image)] for image in images.cpu().detach().numpy()]))
+            input.update({'x': torch.cat([images, fdis, ndvis], dim=1)})
+
         output = self.forward(**input)
-        loss, loss_dict = self.loss_criterion(preds=output, targets=gt)
+        loss, loss_dict = self.loss_criterion(pred=output, target=gt)
         self.metrics['validation'].update(preds=output, targets=gt)
         self.loss_report(loss, loss_dict, 'validation')
         return loss

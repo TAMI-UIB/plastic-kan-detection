@@ -199,16 +199,17 @@ class MaridaRegionDataset(Dataset):
           fdi = np.expand_dims(calculate_fdi(image), 0)
           ndvi = np.expand_dims(calculate_ndvi(image), 0)
           image = np.vstack([image, ndvi, fdi])
-
+          image *= 1e-4
           image = torch.Tensor(image)
 
           size = image.shape[-1]
           pan_size = size // 2
           ms_size = pan_size // 2
 
-          ms = torchvision.transforms.Resize(ms_size, torchvision.transforms.InterpolationMode.BICUBIC)
           gt = torchvision.transforms.Resize(pan_size, torchvision.transforms.InterpolationMode.BICUBIC)(
               image[indexes20m, :, :])
+          ms = torchvision.transforms.Resize(ms_size, torchvision.transforms.InterpolationMode.BICUBIC)(gt)
+
           pan = torchvision.transforms.Resize(pan_size, torchvision.transforms.InterpolationMode.BICUBIC)(
               image[indexes10m, :, :])
           pan = torch.mean(pan, dim=0, keepdim=True)
@@ -218,9 +219,7 @@ class MaridaRegionDataset(Dataset):
           p_tilde = torchvision.transforms.Resize(pan_size, torchvision.transforms.InterpolationMode.BICUBIC)(
               torchvision.transforms.Resize(ms_size, torchvision.transforms.InterpolationMode.BICUBIC)(pan))
 
-          image *= 1e-4
-
-          return {'gt': gt, 'pan': pan, 'ms': ms, 'p_tilde': p_tilde, 'u_tilde': u_tilde}
+          return {'gt': gt, 'pan': pan, 'ms': ms, 'p_tilde': p_tilde, 'u_tilde': u_tilde, 'mask': mask, 'image': image}
 
 
 class MaridaDataset(ConcatDataset):

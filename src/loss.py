@@ -129,6 +129,7 @@ class IoULoss(nn.Module):
 class PSLoss(nn.Module):
     def __init__(self):
         super(PSLoss, self).__init__()
+        self.MSEloss = nn.MSELoss(reduction='mean')
 
     def components(self):
         return ['mse']
