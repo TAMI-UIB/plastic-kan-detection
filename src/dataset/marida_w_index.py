@@ -7,6 +7,7 @@ import rasterio as rio
 import rasterio.windows
 import torch
 import torchvision
+from torchvision.transforms import Resize, InterpolationMode
 from rasterio.features import rasterize
 from torch.utils.data import Dataset, ConcatDataset
 
@@ -206,18 +207,15 @@ class MaridaRegionDataset(Dataset):
           pan_size = size // 2
           ms_size = pan_size // 2
 
-          gt = torchvision.transforms.Resize(pan_size, torchvision.transforms.InterpolationMode.BICUBIC)(
-              image[indexes20m, :, :])
-          ms = torchvision.transforms.Resize(ms_size, torchvision.transforms.InterpolationMode.BICUBIC)(gt)
+          gt = Resize(pan_size, InterpolationMode.BICUBIC)(image[indexes20m, :, :])
+          ms = Resize(ms_size, InterpolationMode.BICUBIC)(gt)
 
-          pan = torchvision.transforms.Resize(pan_size, torchvision.transforms.InterpolationMode.BICUBIC)(
-              image[indexes10m, :, :])
+          pan = Resize(pan_size, InterpolationMode.BICUBIC)(image[indexes10m, :, :])
           pan = torch.mean(pan, dim=0, keepdim=True)
           pan = pan.repeat(len(indexes20m), 1, 1)
 
-          u_tilde = torchvision.transforms.Resize(pan_size, torchvision.transforms.InterpolationMode.BICUBIC)(ms)
-          p_tilde = torchvision.transforms.Resize(pan_size, torchvision.transforms.InterpolationMode.BICUBIC)(
-              torchvision.transforms.Resize(ms_size, torchvision.transforms.InterpolationMode.BICUBIC)(pan))
+          u_tilde = Resize(pan_size, InterpolationMode.BICUBIC)(ms)
+          p_tilde = Resize(pan_size, InterpolationMode.BICUBIC)(Resize(ms_size, InterpolationMode.BICUBIC)(pan))
 
           return {'gt': gt, 'pan': pan, 'ms': ms, 'p_tilde': p_tilde, 'u_tilde': u_tilde, 'mask': mask, 'image': image}
 

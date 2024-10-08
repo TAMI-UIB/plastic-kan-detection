@@ -1,6 +1,7 @@
 import os
 
 import hydra
+import torch
 from dotenv import load_dotenv
 from omegaconf import DictConfig, OmegaConf
 from pytorch_lightning import Trainer
@@ -27,6 +28,12 @@ def train(cfg: DictConfig):
     dataloaders = {"train": train_loader, "validation": validation_loader, "test": test_loader}
 
     experiment = Experiment(cfg)
+
+    experiment.ps_model = instantiate(cfg.ps_model)
+    ckpt = torch.load(f"/home/ivan/projects/plastic-kan-detection/logs/marida_w_index/x4/2024-10-07/ModelPansharpeningSharingOperators/default/version_15/checkpoints/best.ckpt")
+    weights = ckpt['state_dict']
+    weights = {".".join(k.split(".")[1:]): v for k, v in weights.items()}
+    experiment.ps_model.load_state_dict(weights)
 
     tb_log_dir = f'{os.environ["LOG_DIR"]}/{cfg.dataset.name}/x{cfg.sampling}/{cfg.day}/{cfg.model.name}/'
     logger = TensorBoardLogger(tb_log_dir, name=cfg.nickname)

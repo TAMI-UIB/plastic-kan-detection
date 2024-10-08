@@ -37,19 +37,19 @@ class Experiment(pl.LightningModule):
         self.ps_model = None
 
     def forward(self, **kwargs):
-        return self.model(**kwargs)
-
-    def training_step(self, input, idx):
-        gt = input.pop('gt')
         if self.ps_model:
-            images = input.pop('image')
-            highres = self.ps_model(**input)
+            images = kwargs.pop('image')
+            highres = self.ps_model(**kwargs)
+            print(images.shape, highres.shape)
             images[:, indexes20m, :, :] = highres
             images = images[:, 0:12, :, :]
             fdis = torch.Tensor(np.array([[calculate_fdi(image)] for image in images.cpu().detach().numpy()]))
             ndvis = torch.Tensor(np.array([[calculate_ndvi(image)] for image in images.cpu().detach().numpy()]))
-            input.update({'x': torch.cat([images, fdis, ndvis], dim=1)})
+            kwargs.update({'x': torch.cat([images, fdis, ndvis], dim=1)})
+        return self.model(**kwargs)
 
+    def training_step(self, input, idx):
+        gt = input.pop('gt')
         output = self.forward(**input)
         loss, loss_dict = self.loss_criterion(pred=output, target=gt)
         self.metrics['train'].update(preds=output, targets=gt)
@@ -58,15 +58,6 @@ class Experiment(pl.LightningModule):
 
     def validation_step(self, input, idx):
         gt = input.pop('gt')
-        if self.ps_model:
-            images = input.pop('image')
-            highres = self.ps_model(**input)
-            images[:, indexes20m, :, :] = highres
-            images = images[:, 0:12, :, :]
-            fdis = torch.Tensor(np.array([[calculate_fdi(image)] for image in images.cpu().detach().numpy()]))
-            ndvis = torch.Tensor(np.array([[calculate_ndvi(image)] for image in images.cpu().detach().numpy()]))
-            input.update({'x': torch.cat([images, fdis, ndvis], dim=1)})
-
         output = self.forward(**input)
         loss, loss_dict = self.loss_criterion(pred=output, target=gt)
         self.metrics['validation'].update(preds=output, targets=gt)
