@@ -6,12 +6,11 @@ import pandas as pd
 import rasterio as rio
 import rasterio.windows
 import torch
-import torchvision
-from torchvision.transforms import Resize, InterpolationMode
 from rasterio.features import rasterize
 from torch.utils.data import Dataset, ConcatDataset
+from torchvision.transforms import Resize, InterpolationMode
 
-from .utils import read_tif_image, pad, calculate_fdi, calculate_ndvi
+from .utils import read_tif_image, pad, mean_downsampling
 
 # regions where we could not re-download the corresponding tif image
 
@@ -187,8 +186,8 @@ class MaridaRegionDataset(Dataset):
           minx, miny, maxx, maxy = row.geometry.centroid.buffer(self.imagesize // 2).bounds
           window = rasterio.windows.from_bounds(minx, miny, maxx, maxy, transform=self.transform)
 
-          image, _ = read_tif_image(self.tifpath, window)
-          image = image.astype("float")
+          gt, _ = read_tif_image(self.tifpath, window)
+          gt = gt.astype("float")
 
           with rasterio.open(self.maskpath, "r") as src:
               mask = src.read(window=window)[0]
@@ -196,28 +195,24 @@ class MaridaRegionDataset(Dataset):
           # agreggate labels to binary classes
           mask = (np.stack([mask == c for c in DEBRIS_CLASSES]).sum(0) > 0).astype(int)
 
-          image, mask = pad(image, mask, self.imagesize // 10)
-          fdi = np.expand_dims(calculate_fdi(image), 0)
-          ndvi = np.expand_dims(calculate_ndvi(image), 0)
-          image = np.vstack([image, ndvi, fdi])
-          image *= 1e-4
-          image = torch.Tensor(image)
+          gt, mask = pad(gt, mask, self.imagesize // 10)
 
-          size = image.shape[-1]
-          pan_size = size // 2
-          ms_size = pan_size // 2
 
-          gt = Resize(pan_size, InterpolationMode.BICUBIC)(image[indexes20m, :, :])
-          ms = Resize(ms_size, InterpolationMode.BICUBIC)(gt)
+          ms10 = gt[indexes10m, :, :]
 
-          pan = Resize(pan_size, InterpolationMode.BICUBIC)(image[indexes10m, :, :])
-          pan = torch.mean(pan, dim=0, keepdim=True)
-          pan = pan.repeat(len(indexes20m), 1, 1)
+          ms20 = gt[indexes20m, :, :]
+          ms20 = mean_downsampling(ms20, 2)
+          ms20 = Resize(gt.shape[-1], InterpolationMode.BICUBIC)(ms20)
 
-          u_tilde = Resize(pan_size, InterpolationMode.BICUBIC)(ms)
-          p_tilde = Resize(pan_size, InterpolationMode.BICUBIC)(Resize(ms_size, InterpolationMode.BICUBIC)(pan))
 
-          return {'gt': gt, 'pan': pan, 'ms': ms, 'p_tilde': p_tilde, 'u_tilde': u_tilde, 'mask': mask, 'image': image}
+          ms60 = gt[indexes60m, :, :]
+          ms60 = mean_downsampling(ms60, 2)
+          ms60 = mean_downsampling(ms60, 3)
+          ms60 = Resize(gt.shape[-1], InterpolationMode.BICUBIC)(ms60)
+
+          image = torch.cat((ms10, ms20, ms60), dim=0)
+
+          return image, mask, item
 
 
 class MaridaDataset(ConcatDataset):

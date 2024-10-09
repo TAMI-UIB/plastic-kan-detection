@@ -36,30 +36,21 @@ class Experiment(pl.LightningModule):
         self.loss_components = {subset: {k: 0 for k in self.loss_criterion.components()} for subset in self.fit_subsets}
         self.ps_model = None
 
-    def forward(self, **kwargs):
-        if self.ps_model:
-            images = kwargs.pop('image')
-            highres = self.ps_model(**kwargs)
-            print(images.shape, highres.shape)
-            images[:, indexes20m, :, :] = highres
-            images = images[:, 0:12, :, :]
-            fdis = torch.Tensor(np.array([[calculate_fdi(image)] for image in images.cpu().detach().numpy()]))
-            ndvis = torch.Tensor(np.array([[calculate_ndvi(image)] for image in images.cpu().detach().numpy()]))
-            kwargs.update({'x': torch.cat([images, fdis, ndvis], dim=1)})
-        return self.model(**kwargs)
+    def forward(self, low):
+        return self.model(low)
 
     def training_step(self, input, idx):
-        gt = input.pop('gt')
-        output = self.forward(**input)
-        loss, loss_dict = self.loss_criterion(pred=output, target=gt)
+        low, gt, name = input
+        output = self.forward(low)
+        loss, loss_dict = self.loss_criterion(output, gt)
         self.metrics['train'].update(preds=output, targets=gt)
         self.loss_report(loss, loss_dict, 'train')
         return loss
 
     def validation_step(self, input, idx):
-        gt = input.pop('gt')
-        output = self.forward(**input)
-        loss, loss_dict = self.loss_criterion(pred=output, target=gt)
+        low, gt, name = input
+        output = self.forward(low)
+        loss, loss_dict = self.loss_criterion(output, gt)
         self.metrics['validation'].update(preds=output, targets=gt)
         self.loss_report(loss, loss_dict, 'validation')
         return loss

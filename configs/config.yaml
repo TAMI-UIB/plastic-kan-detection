@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - model: model_ps
+  - model: deep_u_net
   - dataset: marida_w_index
 ps_model:
   _target_: model.ps_model.ModelPansharpeningSharingOperators

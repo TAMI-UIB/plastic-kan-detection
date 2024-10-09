@@ -1,10 +1,11 @@
 import os.path
 
+import geopandas as gpd
 import numpy as np
 import rasterio as rio
-from shapely.geometry import LineString, Polygon
-import geopandas as gpd
 import shapely
+import torch
+from shapely.geometry import LineString
 from tqdm import tqdm
 
 L1CBANDS = ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B8A", "B9", "B10", "B11", "B12"]
@@ -137,3 +138,13 @@ def calculate_ndvi(scene):
     RED = scene[bands.index("B4")] * 1e-4
     img = (NIR - RED) / (NIR + RED + 1e-12)
     return img
+
+
+def mean_downsampling(gt, downsamp_factor):
+    size_gt = gt.size()
+    hs = torch.zeros((size_gt[0], size_gt[1], int(size_gt[2] / downsamp_factor), int(size_gt[3] / downsamp_factor))).to(gt.device)
+    for j in range(downsamp_factor):
+        for k in range(downsamp_factor):
+            hs = hs + gt[:, :, j:size_gt[2]:downsamp_factor, k:size_gt[3]:downsamp_factor] / (downsamp_factor**2)
+
+    return hs
