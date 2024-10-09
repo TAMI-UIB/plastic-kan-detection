@@ -10,7 +10,7 @@ from rasterio.features import rasterize
 from torch.utils.data import Dataset, ConcatDataset
 from torchvision.transforms import Resize, InterpolationMode
 
-from .utils import read_tif_image, pad, mean_downsampling
+from .utils import read_tif_image, pad, mean_downsampling, calculate_ndvi, calculate_fdi
 
 # regions where we could not re-download the corresponding tif image
 
@@ -197,20 +197,23 @@ class MaridaRegionDataset(Dataset):
 
           gt, mask = pad(gt, mask, self.imagesize // 10)
 
-
-          ms10 = gt[indexes10m, :, :]
-
-          ms20 = gt[indexes20m, :, :]
-          ms20 = mean_downsampling(ms20, 2)
-          ms20 = Resize(gt.shape[-1], InterpolationMode.BICUBIC)(ms20)
+          fdis = torch.Tensor(np.array([calculate_fdi(gt)]))
+          ndvis = torch.Tensor(np.array([calculate_ndvi(gt)]))
 
 
-          ms60 = gt[indexes60m, :, :]
-          ms60 = mean_downsampling(ms60, 2)
-          ms60 = mean_downsampling(ms60, 3)
-          ms60 = Resize(gt.shape[-1], InterpolationMode.BICUBIC)(ms60)
+          ms10 = torch.Tensor(gt[indexes10m, :, :])
 
-          image = torch.cat((ms10, ms20, ms60), dim=0)
+          ms20 = torch.Tensor(gt[indexes20m, :, :])
+          ms20 = Resize(gt.shape[-1]//2, InterpolationMode.BICUBIC)(ms20)
+          ms20 = Resize(gt.shape[-1], InterpolationMode.BICUBIC)(ms20).squeeze()
+
+          ms60 = torch.Tensor(gt[indexes60m, :, :])
+          ms60 = Resize(gt.shape[-1]//6, InterpolationMode.BICUBIC)(ms60)
+          ms60 = Resize(gt.shape[-1], InterpolationMode.BICUBIC)(ms60).squeeze()
+
+          mask = torch.Tensor(mask).unsqueeze(0)
+
+          image = torch.cat((ms10, ms20, ms60, fdis, ndvis), dim=0)
 
           return image, mask, item
 
