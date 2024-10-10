@@ -1,0 +1,28 @@
+name: MANet
+goal: marc_unet
+shared: False
+module:
+  _target_: segmentation_models_pytorch.MAnet
+  _recursive_: False
+  encoder_name: resnet34
+  in_channels: ${dataset.ms_channels}
+  classes: 1
+train:
+  batch_size: 100
+  num_workers: 16
+  max_epochs: 100
+loss:
+  _target_: loss.DiceBCELoss
+
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 1.e-4
+  betas:
+    - 0.9
+    - 0.999
+  eps: 1.e-8
+scheduler:
+  _target_: torch.optim.lr_scheduler.MultiStepLR
+  milestones:
+    - 1000
+  gamma: 1

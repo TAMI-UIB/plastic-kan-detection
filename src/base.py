@@ -25,6 +25,7 @@ class Experiment(pl.LightningModule):
         self.subsets = ['train', 'validation', 'test']
         self.fit_subsets = ['train', 'validation']
         # Define model and loss
+        self.model_name = cfg.model.name
         self.model = instantiate(cfg.model.module)
         self.loss_criterion = instantiate(cfg.model.loss)
         # Number of model parameters
@@ -37,6 +38,9 @@ class Experiment(pl.LightningModule):
         self.ps_model = None
 
     def forward(self, low):
+        if self.model_name == "MANet":
+            self.model.encoder.conv1 = torch.nn.Conv2d(12, 64, kernel_size=(7, 7), stride=(2, 2),
+                                                       padding=(3, 3), bias=False)
         return self.model(low)
 
     def training_step(self, input, idx):
