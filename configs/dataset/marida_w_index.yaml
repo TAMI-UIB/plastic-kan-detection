@@ -1,5 +1,5 @@
 name: marida_w_index
-ms_channels: 14
+ms_channels: 12
 train:
   _target_: torch.utils.data.DataLoader
   dataset:

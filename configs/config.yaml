@@ -2,20 +2,6 @@ defaults:
   - _self_
   - model: manet
   - dataset: marida_w_index
-ps_model:
-  _target_: model.ps_model.ModelPansharpeningSharingOperators
-  _recursive_: False
-  kernel_size: 5
-  std: 1
-  panchro_size: 128
-  ms_size: 64
-  n_resblocks: 1
-  n_channels: 4
-  n_iterations: 20
-  learn_B: true
-  learn_upsample: true
-  learn_p_tilde: true
-  learn_u_tilde: true
 save_image: True
 sampling: 4
 hydra:
@@ -25,7 +11,7 @@ hydra:
 # Otros parámetros globales
 seed: 42
 devices:
-  - 1
+  - 0
 day: ${now:%Y-%m-%d}
 metrics:
   _target_: utils.metrics.MetricCalculator
