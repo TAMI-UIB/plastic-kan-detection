@@ -12,7 +12,7 @@ os.environ["PROJECT_ROOT"] = os.path.dirname(os.path.dirname(os.path.abspath(__f
 
 load_dotenv(os.path.join(os.environ["PROJECT_ROOT"], ".env"))
 
-from callbacks.logger import TBoardLogger, ImagePlotCallback, GDriveLogger
+from callbacks.logger import TBoardLogger, ImagePlotCallback, GDriveLogger, SaveImageCallback
 from base import Experiment
 from hydra.utils import instantiate
 
@@ -33,6 +33,7 @@ def test(cfg: DictConfig):
     default_callbacks = [
         TBoardLogger(day=cfg.day, name=cfg.model.name),
         ImagePlotCallback(plot_interval=cfg.plot_interval),
+        SaveImageCallback(path=csv_log_path),
         GDriveLogger(day=cfg.day, name=cfg.model.name, path=csv_log_path),
         RichModelSummary(max_depth=3),
         instantiate(cfg.checkpoint),

@@ -6,8 +6,9 @@ import pytorch_lightning as pl
 import torch
 from matplotlib import pyplot as plt
 from pytorch_lightning.callbacks import Callback
-from skimage.exposure import equalize_hist
+from torchvision.utils import save_image
 
+from utils import s2_to_rgb, calculate_fdi, calculate_ndvi
 from .upload_drive import download_drive, upload_drive
 
 
@@ -106,31 +107,7 @@ class GDriveLogger(Callback):
                 upload_drive(file_name, pl_module.cfg.dataset.name)
 
 
-bands = ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B8A", "B9", "B11", "B12"]
-def calculate_fdi(scene):
-    # scene values [0,1e4]
 
-    NIR = scene[:,:,bands.index("B8")] * 1e-4
-    RED2 = scene[:,:,bands.index("B6")] * 1e-4
-    SWIR1 = scene[:,:,bands.index("B11")] * 1e-4
-
-    lambda_NIR = 832.9
-    lambda_RED = 664.8
-    lambda_SWIR1 = 1612.05
-    NIR_prime = RED2 + (SWIR1 - RED2) * 10 * (lambda_NIR - lambda_RED) / (lambda_SWIR1 - lambda_RED)
-
-    img = NIR - NIR_prime
-    return img
-
-def calculate_ndvi(scene):
-    NIR = scene[:,:,bands.index("B8")] * 1e-4
-    RED = scene[:,:,bands.index("B4")] * 1e-4
-    img = (NIR - RED) / (NIR + RED + 1e-12)
-    return img
-
-def s2_to_rgb(scene):
-    tensor = np.stack([scene[:,:,bands.index('B4')],scene[:,:,bands.index('B3')],scene[:,:,bands.index('B2')]],axis=2)
-    return equalize_hist(tensor)
 
 class ImagePlotCallback(pl.Callback):
     def __init__(self, plot_interval=200):
@@ -192,6 +169,55 @@ class ImagePlotCallback(pl.Callback):
             # Agregar la imagen a TensorBoard
             trainer.logger.experiment.add_figure(f'{pl_module.cfg.model.name}_{pl_module.cfg.nickname}/gt_vs_pred', fig,
                                                  trainer.current_epoch)
+
+
+class SaveImageCallback(pl.Callback):
+    def __init__(self, path):
+        super().__init__()
+        self.path = path
+
+    def on_test_epoch_end(self, trainer, pl_module):
+        # Establece el modo de evaluación
+        pl_module.eval()
+        with torch.no_grad():
+            # Recorre el DataLoader de validación
+            batch = next(iter(trainer.test_dataloaders))
+            images, masks, name = batch
+            images = images.to(pl_module.device)
+
+            preds = pl_module(images)
+
+        # Vuelve al modo de entrenamiento
+        pl_module.train()
+
+        N = min(max(masks.shape[0],2), 5)
+
+        images = images.cpu().numpy()
+        masks = masks.cpu().numpy()
+        preds = preds.cpu().numpy()
+
+        # Crea un grid de imatges
+        preds_exp = np.where(np.exp(preds) > 0.5, 1, 0)
+        preds_sig = np.where(torch.sigmoid(torch.tensor(preds)).detach().cpu().numpy() > 0.5, 1, 0)
+
+        height = 3
+        width = 3
+        images = np.transpose(images, (0, 2, 3, 1))
+        masks = np.transpose(masks, (0, 2, 3, 1))
+        preds = np.transpose(preds, (0, 2, 3, 1))
+        preds_exp = np.transpose(preds_exp, (0, 2, 3, 1))
+        preds_sig = np.transpose(preds_sig, (0, 2, 3, 1))
+        fig, axs = plt.subplots(N, 6, figsize=(6 * width, N * height), squeeze=False)
+        for i in range(images.shape[0]):
+            save_image(torch.permute(torch.from_numpy(s2_to_rgb(images[i])), (2, 0, 1)), f"{self.path}/{i}_RGB.png")
+            plt.imshow(calculate_ndvi(images[i]), cmap="viridis")
+            plt.axis("off")
+            plt.savefig(f"{self.path}/{i}_NDVI.png")
+            plt.imshow(calculate_fdi(images[i]), cmap="magma")
+            plt.axis("off")
+            plt.savefig(f"{self.path}/{i}_FDI.png")
+            save_image(masks[i].float(), f"{self.path}/{i}_GT.png")
+            save_image(torch.from_numpy(preds_sig[i]).float(), f"{self.path}/{i}_{name}_pred.png")
 
 
 class TestMetricPerImage(Callback):
