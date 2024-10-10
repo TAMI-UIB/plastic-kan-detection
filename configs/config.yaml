@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - model: manet
+  - model: u_net
   - dataset: marida_w_index
 save_image: True
 sampling: 4

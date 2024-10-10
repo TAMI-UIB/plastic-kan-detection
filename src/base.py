@@ -1,14 +1,10 @@
 import os
 from typing import Dict, Any
 
-import numpy as np
 import pytorch_lightning as pl
-import torch
 from hydra.utils import instantiate
 from omegaconf import DictConfig
 from torchvision.utils import save_image
-
-from utils.images import calculate_fdi, calculate_ndvi
 
 pl.seed_everything(42)
 
@@ -25,8 +21,8 @@ class Experiment(pl.LightningModule):
         self.subsets = ['train', 'validation', 'test']
         self.fit_subsets = ['train', 'validation']
         # Define model and loss
-        self.model_name = cfg.model.name
         self.model = instantiate(cfg.model.module)
+
         self.loss_criterion = instantiate(cfg.model.loss)
         # Number of model parameters
         self.num_params = sum(p.numel() for p in self.parameters() if p.requires_grad)
@@ -38,9 +34,6 @@ class Experiment(pl.LightningModule):
         self.ps_model = None
 
     def forward(self, low):
-        if self.model_name == "MANet":
-            self.model.encoder.conv1 = torch.nn.Conv2d(12, 64, kernel_size=(7, 7), stride=(2, 2),
-                                                       padding=(3, 3), bias=False)
         return self.model(low)
 
     def training_step(self, input, idx):
@@ -60,8 +53,8 @@ class Experiment(pl.LightningModule):
         return loss
 
     def test_step(self, batch, batch_idx, dataloader_idx=0):
-        gt = batch['gt']
-        output = self.forward(**batch)
+        low, gt, name = batch
+        output = self.forward(low)
         self.metrics[self.subsets[dataloader_idx]].update(preds=output, targets=gt)
 
     def configure_optimizers(self):
