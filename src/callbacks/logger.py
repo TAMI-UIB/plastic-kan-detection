@@ -177,6 +177,7 @@ class SaveImageCallback(pl.Callback):
         self.path = path
 
     def on_test_epoch_end(self, trainer, pl_module):
+        model_name = pl_module.cfg.model.name
         for subset, dataloader in trainer.test_dataloaders.items():
             for batch in dataloader:
                 images, masks, name = batch
@@ -184,15 +185,15 @@ class SaveImageCallback(pl.Callback):
                 preds = pl_module(images)
                 images = images.cpu().numpy()
                 i = 0
-                save_image(torch.permute(torch.from_numpy(s2_to_rgb(images[i])), (2, 0, 1)), f"{self.path}/{i}_RGB.png")
+                save_image(torch.permute(torch.from_numpy(s2_to_rgb(images[i])), (2, 0, 1)), f"{self.path}/{model_name}/{i}_RGB.png")
                 plt.imshow(calculate_ndvi(images[i]), cmap="viridis")
                 plt.axis("off")
-                plt.savefig(f"{self.path}/{i}_NDVI.png")
+                plt.savefig(f"{self.path}/{model_name}/{i}_NDVI.png")
                 plt.imshow(calculate_fdi(images[i]), cmap="magma")
                 plt.axis("off")
-                plt.savefig(f"{self.path}/{i}_FDI.png")
-                save_image(masks[0][i], f"{self.path}/{i}_GT.png")
-                save_image(preds[0][i], f"{self.path}/{i}_pred.png")
+                plt.savefig(f"{self.path}/{model_name}/{i}_FDI.png")
+                save_image(masks[0][i], f"{self.path}/{model_name}/{i}_GT.png")
+                save_image(preds[0][i], f"{self.path}/{model_name}/{i}_pred.png")
 
 
 class TestMetricPerImage(Callback):
