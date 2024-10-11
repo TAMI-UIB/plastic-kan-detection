@@ -6,7 +6,8 @@ from googleapiclient.http import MediaFileUpload
 from googleapiclient.http import MediaIoBaseDownload
 from googleapiclient.errors import HttpError
 
-dataset_id = {"sentinel2": "1kQrYXVMxw_MdlP2Mmm69QXwu9yqlg4SP", "marida": "1qQsnXnSP0SkHeEjfe99NehW1tp8nrV1N"}
+dataset_id = {"sentinel2": "1kQrYXVMxw_MdlP2Mmm69QXwu9yqlg4SP", "marida": "1qQsnXnSP0SkHeEjfe99NehW1tp8nrV1N",
+              "marida_w_index": "1qQsnXnSP0SkHeEjfe99NehW1tp8nrV1N"}
 
 def upload_drive(file_path, dataset):
     # Credenciales y configuración

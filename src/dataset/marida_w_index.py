@@ -7,13 +7,13 @@ import rasterio as rio
 import rasterio.windows
 import torch
 from rasterio.features import rasterize
+from skimage.exposure import equalize_hist
 from torch.utils.data import Dataset, ConcatDataset
 from torchvision.transforms import Resize, InterpolationMode
 
-from .utils import read_tif_image, pad, mean_downsampling, calculate_ndvi, calculate_fdi
+from .utils import read_tif_image, pad, calculate_ndvi, calculate_fdi
 
-# regions where we could not re-download the corresponding tif image
-
+bands = ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B8A", "B9", "B11", "B12"]
 l1cbands = ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B8A", "B9", "B10", "B11", "B12"]
 l2abands = ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B8A", "B9", "B11", "B12"]
 indexes10m = [l2abands.index(band) for band in ['B2', 'B3', 'B4', 'B8']]
@@ -216,6 +216,10 @@ class MaridaRegionDataset(Dataset):
           image = torch.cat((ms10, ms20, ms60, fdis, ndvis), dim=0)
 
           return image, mask, item
+     def get_rgb(self, u):
+         tensor = np.stack(
+             [u[:, :, bands.index('B4')], u[:, :, bands.index('B3')], u[:, :, bands.index('B2')]], axis=2)
+         return equalize_hist(tensor)
 
 
 class MaridaDataset(ConcatDataset):

@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 from pytorch_lightning.callbacks import Callback
 from torchvision.utils import save_image
 
-from utils import s2_to_rgb, calculate_fdi, calculate_ndvi
+from .utils import s2_to_rgb, calculate_fdi, calculate_ndvi
 from .upload_drive import download_drive, upload_drive
 
 
@@ -177,47 +177,22 @@ class SaveImageCallback(pl.Callback):
         self.path = path
 
     def on_test_epoch_end(self, trainer, pl_module):
-        # Establece el modo de evaluación
-        pl_module.eval()
-        with torch.no_grad():
-            # Recorre el DataLoader de validación
-            batch = next(iter(trainer.test_dataloaders))
-            images, masks, name = batch
-            images = images.to(pl_module.device)
-
-            preds = pl_module(images)
-
-        # Vuelve al modo de entrenamiento
-        pl_module.train()
-
-        N = min(max(masks.shape[0],2), 5)
-
-        images = images.cpu().numpy()
-        masks = masks.cpu().numpy()
-        preds = preds.cpu().numpy()
-
-        # Crea un grid de imatges
-        preds_exp = np.where(np.exp(preds) > 0.5, 1, 0)
-        preds_sig = np.where(torch.sigmoid(torch.tensor(preds)).detach().cpu().numpy() > 0.5, 1, 0)
-
-        height = 3
-        width = 3
-        images = np.transpose(images, (0, 2, 3, 1))
-        masks = np.transpose(masks, (0, 2, 3, 1))
-        preds = np.transpose(preds, (0, 2, 3, 1))
-        preds_exp = np.transpose(preds_exp, (0, 2, 3, 1))
-        preds_sig = np.transpose(preds_sig, (0, 2, 3, 1))
-        fig, axs = plt.subplots(N, 6, figsize=(6 * width, N * height), squeeze=False)
-        for i in range(images.shape[0]):
-            save_image(torch.permute(torch.from_numpy(s2_to_rgb(images[i])), (2, 0, 1)), f"{self.path}/{i}_RGB.png")
-            plt.imshow(calculate_ndvi(images[i]), cmap="viridis")
-            plt.axis("off")
-            plt.savefig(f"{self.path}/{i}_NDVI.png")
-            plt.imshow(calculate_fdi(images[i]), cmap="magma")
-            plt.axis("off")
-            plt.savefig(f"{self.path}/{i}_FDI.png")
-            save_image(masks[i].float(), f"{self.path}/{i}_GT.png")
-            save_image(torch.from_numpy(preds_sig[i]).float(), f"{self.path}/{i}_{name}_pred.png")
+        for subset, dataloader in trainer.test_dataloaders.items():
+            for batch in dataloader:
+                images, masks, name = batch
+                images = images.to(pl_module.device)
+                preds = pl_module(images)
+                images = images.cpu().numpy()
+                i = 0
+                save_image(torch.permute(torch.from_numpy(s2_to_rgb(images[i])), (2, 0, 1)), f"{self.path}/{i}_RGB.png")
+                plt.imshow(calculate_ndvi(images[i]), cmap="viridis")
+                plt.axis("off")
+                plt.savefig(f"{self.path}/{i}_NDVI.png")
+                plt.imshow(calculate_fdi(images[i]), cmap="magma")
+                plt.axis("off")
+                plt.savefig(f"{self.path}/{i}_FDI.png")
+                save_image(masks[0][i], f"{self.path}/{i}_GT.png")
+                save_image(preds[0][i], f"{self.path}/{i}_pred.png")
 
 
 class TestMetricPerImage(Callback):
