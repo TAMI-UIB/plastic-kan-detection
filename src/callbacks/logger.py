@@ -178,22 +178,23 @@ class SaveImageCallback(pl.Callback):
 
     def on_test_epoch_end(self, trainer, pl_module):
         model_name = pl_module.cfg.model.name
+        os.makedirs(f"{self.path}/{model_name}", exist_ok=True)
         for subset, dataloader in trainer.test_dataloaders.items():
             for batch in dataloader:
                 images, masks, name = batch
                 images = images.to(pl_module.device)
                 preds = pl_module(images)
                 images = images.cpu().numpy()
-                i = 0
-                save_image(torch.permute(torch.from_numpy(s2_to_rgb(images[i])), (2, 0, 1)), f"{self.path}/{model_name}/{i}_RGB.png")
-                plt.imshow(calculate_ndvi(images[i]), cmap="viridis")
-                plt.axis("off")
-                plt.savefig(f"{self.path}/{model_name}/{i}_NDVI.png")
-                plt.imshow(calculate_fdi(images[i]), cmap="magma")
-                plt.axis("off")
-                plt.savefig(f"{self.path}/{model_name}/{i}_FDI.png")
-                save_image(masks[0][i], f"{self.path}/{model_name}/{i}_GT.png")
-                save_image(preds[0][i], f"{self.path}/{model_name}/{i}_pred.png")
+                for i in range(min(len(images), 20)):
+                    save_image(torch.permute(torch.from_numpy(s2_to_rgb(images[i])), (2, 0, 1)), f"{self.path}/{model_name}/{i}_RGB.png")
+                    plt.imshow(calculate_ndvi(images[i]), cmap="viridis")
+                    plt.axis("off")
+                    plt.savefig(f"{self.path}/{model_name}/{i}_NDVI.png")
+                    plt.imshow(calculate_fdi(images[i]), cmap="magma")
+                    plt.axis("off")
+                    plt.savefig(f"{self.path}/{model_name}/{i}_FDI.png")
+                    save_image(masks[i][0], f"{self.path}/{model_name}/{i}_GT.png")
+                    save_image(preds[i][0], f"{self.path}/{model_name}/{i}_pred.png")
 
 
 class TestMetricPerImage(Callback):
