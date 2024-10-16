@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - model: u_net
+  - model: deep_u_net
   - dataset: marida
 save_image: True
 sampling: 4
@@ -25,14 +25,18 @@ nickname: "default"
 plot_interval: 2
 checkpoint:
   _target_:  pytorch_lightning.callbacks.ModelCheckpoint
-  monitor: 'validation_auroc'
+  monitor: 'validation_jaccard'
   filename: 'best'
   save_last: True
   mode: 'max'
   every_n_epochs: 1
   every_n_train_steps: 0
   save_on_train_epoch_end: True
-
+convergence:
+  _target_: callbacks.convergence.WindowConvergence
+  window_size: 25
+  epsilon: 0.01
+max_epochs: 500
 
 
 

@@ -12,7 +12,7 @@ os.environ["PROJECT_ROOT"] = os.path.dirname(os.path.dirname(os.path.abspath(__f
 load_dotenv(os.path.join(os.environ["PROJECT_ROOT"], ".env"))
 
 from callbacks.logger import TBoardLogger, ImagePlotCallback, GDriveLogger
-from callbacks.early_stopping import WindowConvergence
+from callbacks.convergence import WindowConvergence
 from base import Experiment
 from hydra.utils import instantiate
 
@@ -33,7 +33,7 @@ def train(cfg: DictConfig):
     csv_log_path = f"{os.environ['LOG_DIR']}/{cfg.dataset.name}"
 
     default_callbacks = [
-        # WindowConvergence(),
+        instantiate(cfg.convergence),
         TBoardLogger(day=cfg.day, name=cfg.model.name),
         # ImagePlotCallback(plot_interval=cfg.plot_interval),
         GDriveLogger(day=cfg.day, name=cfg.model.name, path=csv_log_path),
@@ -42,7 +42,7 @@ def train(cfg: DictConfig):
     ]
 
     callback_list = instantiate(cfg.model.callbacks) + default_callbacks if hasattr(cfg.model, 'callbacks') else default_callbacks
-    trainer = Trainer(max_epochs=cfg.model.train.max_epochs, logger=logger,
+    trainer = Trainer(max_epochs=cfg.max_epochs, logger=logger,
                       devices=cfg.devices,
                       callbacks=callback_list, accelerator="auto")
 
