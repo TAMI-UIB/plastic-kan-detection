@@ -1,7 +1,7 @@
 defaults:
   - _self_
   - model: u_net
-  - dataset: marida_w_index
+  - dataset: marida
 save_image: True
 sampling: 4
 hydra:
