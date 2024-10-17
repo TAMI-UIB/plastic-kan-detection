@@ -19,7 +19,10 @@ class WindowConvergence(Callback):
 
     def on_validation_epoch_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
         value = trainer.callback_metrics.get(self.monitor)
-        self.window.append(value)
+
+        if value is not None and isinstance(value, (int, float)):
+            self.window.append(float(value))
+
         if len(self.window) >= self.window_size:
             self.window = self.window[-self.window_size:]
             self.converged = abs(self._get_slope()) < self._lambda() * self.epsilon
