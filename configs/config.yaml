@@ -11,7 +11,7 @@ hydra:
 # Otros parámetros globales
 seed: 42
 devices:
-  - 1
+  - 0
 day: ${now:%Y-%m-%d}
 metrics:
   _target_: utils.metrics.MetricCalculator
