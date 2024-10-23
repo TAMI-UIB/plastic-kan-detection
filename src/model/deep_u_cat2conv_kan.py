@@ -72,12 +72,12 @@ class UpBlock(nn.Module):
 
         self.up = nn.ConvTranspose2d(in_channels, mid_channels1, kernel_size=kernel_size, stride=kernel_size)
         self.doble_conv = DobleConv(mid_channels1 * 2, mid_channels2, out_channels, BN)
-        self.conv_kan = KANConv2D(in_channels, in_channels, kernel_size=3, padding=1)
+        self.conv_kan = KANConv2D(mid_channels1, mid_channels1, kernel_size=3, padding=1)
 
     def forward(self, x, conc_layer):
         x1 = self.up(x)
-        conc_layer = CenterCrop(size=(x1.size()[2], x1.size()[3]))(conc_layer)
-        x = self.conv_kan(torch.cat([x1, conc_layer], dim=1))
+        conc_layer = self.conv_kan(CenterCrop(size=(x1.size()[2], x1.size()[3]))(conc_layer))
+        x = torch.cat([x1, conc_layer], dim=1)
         return self.doble_conv(x) + x1
 
 
