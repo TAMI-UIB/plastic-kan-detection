@@ -3,7 +3,7 @@ import math
 import torch.nn as nn
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 
-from kan import KANLinear
+from .kan import KANLinear
 
 
 class DW_bn_relu(nn.Module):
@@ -223,7 +223,7 @@ class BottleNeckKAN(nn.Module):
     def __init__(self, image_size):
         super(BottleNeckKAN, self).__init__()
 
-        embed_dims = [256, 320, 512]
+        embed_dims = [256, 64, 64]
 
         self.patch_embed4 = PatchEmbed(img_size=image_size, patch_size=3, stride=2, in_chans=embed_dims[1],
                                        embed_dim=embed_dims[2])

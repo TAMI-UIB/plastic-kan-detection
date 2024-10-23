@@ -108,9 +108,9 @@ class DeepUBottleKAN(nn.Module):
         x2 = self.down_block1(x1)
         x3 = self.down_block2(x2)
         x4 = self.down_block3(x3)
-        y = self.down_block4(x4)
+        # y = self.down_block4(x4)
 
-        y = self.bottleneck(y)
+        y = self.bottleneck(x4)
 
         y = self.up_block1(y, x4)
         y = self.up_block2(y, x3)
