@@ -12,7 +12,6 @@ os.environ["PROJECT_ROOT"] = os.path.dirname(os.path.dirname(os.path.abspath(__f
 load_dotenv(os.path.join(os.environ["PROJECT_ROOT"], ".env"))
 
 from callbacks.logger import TBoardLogger, ImagePlotCallback, GDriveLogger
-from callbacks.convergence import WindowConvergence
 from base import Experiment
 from hydra.utils import instantiate
 

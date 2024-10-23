@@ -275,8 +275,9 @@ class D_ConvLayer(nn.Module):
 
 
 class UKAN(nn.Module):
-    def __init__(self, num_classes, input_channels=3, deep_supervision=False, img_size=224, patch_size=16, in_chans=3, embed_dims=[256, 320, 512], no_kan=False,
-    drop_rate=0., drop_path_rate=0., norm_layer=nn.LayerNorm, depths=[1, 1, 1], **kwargs):
+    def __init__(self, num_classes, input_channels=3, deep_supervision=False, img_size=224, patch_size=16, in_chans=3,
+                 embed_dims=[256, 320, 512], no_kan=False, drop_rate=0., drop_path_rate=0., norm_layer=nn.LayerNorm,
+                 depths=[1, 1, 1], **kwargs):
         super().__init__()
 
         kan_input_dim = embed_dims[0]

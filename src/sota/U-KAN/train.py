@@ -1,38 +1,31 @@
 import argparse
+import os
+import random
+import shutil
 from collections import OrderedDict
 from glob import glob
-import random
-import numpy as np
 
+import numpy as np
 import pandas as pd
 import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
 import torch.optim as optim
 import yaml
-
-from albumentations.augmentations import transforms
+from albumentations import RandomRotate90, Resize
 from albumentations.augmentations import geometric
-
+from albumentations.augmentations import transforms
 from albumentations.core.composition import Compose
 from sklearn.model_selection import train_test_split
+from tensorboardX import SummaryWriter
 from torch.optim import lr_scheduler
 from tqdm import tqdm
-from albumentations import RandomRotate90, Resize
 
 import archs
-
 import losses
 from dataset import Dataset
-
 from metrics import iou_score, indicators
-
 from utils import AverageMeter, str2bool
-
-from tensorboardX import SummaryWriter
-
-import shutil
-import os
 
 ARCH_NAMES = archs.__all__
 LOSS_NAMES = losses.__all__
@@ -268,7 +261,8 @@ def main():
     cudnn.benchmark = True
 
     # create model
-    model = archs.__dict__[config['arch']](config['num_classes'], config['input_channels'], config['deep_supervision'], embed_dims=config['input_list'], no_kan=config['no_kan'])
+    model = archs.__dict__[config['arch']](config['num_classes'], config['input_channels'], config['deep_supervision'],
+                                           embed_dims=config['input_list'], no_kan=config['no_kan'])
 
     model = model.cuda()
 
