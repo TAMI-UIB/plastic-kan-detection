@@ -1,8 +1,9 @@
-import torch.nn as nn
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 from functorch.einops import rearrange
-from torchmetrics.functional import spectral_angle_mapper
+from torch.nn.modules.loss import CrossEntropyLoss
+
 
 class FocalLoss(nn.Module):
     def __init__(self, gamma=2):
@@ -137,3 +138,20 @@ class PSLoss(nn.Module):
     def forward(self, pred, target):
         mse = self.MSEloss(pred, target)
         return mse, {'mse': mse}
+
+
+class SwinLoss(nn.Module):
+    def __init__(self):
+        super(SwinLoss, self).__init__()
+        self.ce_loss = CrossEntropyLoss()
+        self.dice_loss = DiceLoss()
+
+    def components(self):
+        return ['ce', 'dice']
+
+    def forward(self, pred, target):
+        loss_ce = self.ce_loss(pred, target)
+        loss_dice = self.dice_loss(pred, target, softmax=True)
+        loss = 0.4 * loss_ce + 0.6 * loss_dice
+
+        return loss, {'ce': loss_ce, 'dice': loss_dice}

@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - model: deep_u_bottle_kan
+  - model: swin
   - dataset: marida
 save_image: True
 sampling: 4
