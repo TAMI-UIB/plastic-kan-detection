@@ -151,7 +151,8 @@ class SwinLoss(nn.Module):
 
     def forward(self, pred, target):
         loss_ce = self.ce_loss(pred, target)
-        loss_dice = self.dice_loss(pred, target, softmax=True)
+        loss_dice, _ = self.dice_loss(pred, target)
+
         loss = 0.4 * loss_ce + 0.6 * loss_dice
 
         return loss, {'ce': loss_ce, 'dice': loss_dice}

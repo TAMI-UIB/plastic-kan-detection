@@ -2,10 +2,10 @@ name: SwinUnet
 goal: vision_transformer
 shared: False
 module:
-  _target_: src.sota.Swin-Unet.networks.vision_transformer.SwinUnet
+  _target_: sota.Swin-Unet.networks.vision_transformer.SwinUnet
   _recursive_: False
   num_classes: 1
-  img_size: 64
+  img_size: 224
   config:
     MODEL:
       DROP_RATE: 0.0
@@ -15,7 +15,7 @@ module:
         IN_CHANS: 12
         EMBED_DIM: 96
         DEPTHS: [2, 2, 6, 2]
-        NUM_HEADS: [12, 24, 48, 96]
+        NUM_HEADS: [3, 6, 12, 24]
         WINDOW_SIZE: 7
         MLP_RATIO: 4.
         QKV_BIAS: True
@@ -24,7 +24,7 @@ module:
         PATCH_NORM: True
         PRETRAIN_CKPT: False
     DATA:
-      IMG_SIZE: 64
+      IMG_SIZE: 224
     TRAIN:
       USE_CHECKPOINT: False
 
