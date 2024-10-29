@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - model: swin
+  - model: st_unet
   - dataset: marida
 save_image: True
 sampling: 4
