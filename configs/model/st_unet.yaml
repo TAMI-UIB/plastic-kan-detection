@@ -1,0 +1,57 @@
+name: SwinUnet
+goal: vision_transformer
+shared: False
+module:
+  _target_: sota.Swin-Unet.networks.vision_transformer.SwinUnet
+  _recursive_: False
+  num_classes: 1
+  config:
+    classifier: seg
+    decoder_channels: (512,256,128,64)
+    skip_channels: [512,256,128,64]
+    n_classes: 6
+    n_skip: 4
+    activation: softmax
+    hidden_size: 768
+    representation_size: None
+    resnet_pretrained_path: None
+    patch_size: 16
+    data:
+      img_size: 128
+      in_chans: 3
+    patches:
+      grid: (4, 4)
+    resnet:
+      num_layers: (3, 4, 6, 3)
+      width_factor: 0.5
+    trans:
+      num_heads: [3, 6, 12, 24]
+      depths: [2, 2, 6, 2]
+      embed_dim: 96
+      window_size: 8
+    transformer:
+      mlp_dim: 3072
+      num_heads: 12
+      num_layers: 1
+      attention_dropout_rate: 0.0
+      dropout_rate: 0.1
+
+train:
+  batch_size: 100
+  num_workers: 16
+  max_epochs: 100
+loss:
+  _target_: loss.SwinLoss
+
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 1.e-4
+  betas:
+    - 0.9
+    - 0.999
+  eps: 1.e-8
+scheduler:
+  _target_: torch.optim.lr_scheduler.MultiStepLR
+  milestones:
+    - 1000
+  gamma: 1
