@@ -2,7 +2,7 @@ name: SwinUnet
 goal: vision_transformer
 shared: False
 module:
-  _target_: sota.Swin-Unet.networks.vision_transformer.SwinUnet
+  _target_: sota.ST-UNet.networks.vit_seg_modeling.VisionTransformer
   _recursive_: False
   num_classes: 1
   config:
