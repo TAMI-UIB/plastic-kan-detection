@@ -1,17 +1,17 @@
-import math
-import numpy as np
-from os.path import join as pjoin
-from collections import OrderedDict
-import copy
-import torch
 import logging
+import math
+from collections import OrderedDict
+from os.path import join as pjoin
+
+import numpy as np
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from deform_conv import DeformConv2d
-from SoftPool import soft_pool2d, SoftPool2d
-from torch.nn.modules.utils import _pair
-from torch.nn import CrossEntropyLoss, Dropout, Softmax, Linear, Conv2d, LayerNorm
+from SoftPool import SoftPool2d
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
+from torch.nn import Dropout, Softmax, Linear
+
+from deform_conv import DeformConv2d
 
 logger = logging.getLogger(__name__)
 
